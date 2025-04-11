@@ -1,10 +1,9 @@
 package com.codejam.codex.authzen.controllers;
 
-import com.codejam.codex.authzen.constanta.ApiEndpoint;
+import com.codejam.codex.authzen.constants.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
-import com.codejam.codex.authzen.models.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
