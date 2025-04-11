@@ -1,5 +1,6 @@
 package com.codejam.codex.authzen.controllers;
 
+import com.codejam.codex.authzen.constanta.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.utils.JwtService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(ApiEndpoint.AUTH)
 public class AuthController {
 
     private final JwtService jwtService;
@@ -26,7 +27,7 @@ public class AuthController {
         this.userDetailsService = userDetailsService;
     }
 
-    @PostMapping("/refresh")
+    @PostMapping(ApiEndpoint.AUTH_REFRESH)
     public ResponseEntity<TokenResponse> refreshToken(
             @RequestBody RefreshTokenRequest request
     ) {
@@ -43,31 +44,31 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponse(newAccessToken));
     }
 
-    @PostMapping("/register")
+    @PostMapping(ApiEndpoint.AUTH_REGISTER)
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         // register user
         return null;
     }
 
-    @PostMapping("/login")
+    @PostMapping(ApiEndpoint.AUTH_LOGIN)
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         // authenticate user
         return null;
     }
 
-    @PostMapping("/oauth")
+    @PostMapping(ApiEndpoint.AUTH_OAUTH)
     public ResponseEntity<?> oauthLogin(@RequestBody OAuthRequest request) {
         // handle OAuth login
         return null;
     }
 
-    @PostMapping("/reset-request")
+    @PostMapping(ApiEndpoint.AUTH_RESET_REQUEST)
     public ResponseEntity<?> resetPasswordRequest(@RequestBody ResetRequest request) {
         // send reset email/token
         return null;
     }
 
-    @PostMapping("/reset-password")
+    @PostMapping(ApiEndpoint.AUTH_RESET_PASSWORD)
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         // reset password
         return null;
