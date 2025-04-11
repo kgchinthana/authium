@@ -18,32 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(ApiEndpoint.AUTH)
 public class AuthController {
 
-    private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
-
-    @Autowired
-    public AuthController(JwtService jwtService, UserDetailsService userDetailsService) {
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
-
-    @PostMapping(ApiEndpoint.AUTH_REFRESH)
-    public ResponseEntity<TokenResponse> refreshToken(
-            @RequestBody RefreshTokenRequest request
-    ) {
-        String refreshToken = request.getRefreshToken();
-
-        if (!jwtService.isTokenValid(refreshToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String username = jwtService.extractUsername(refreshToken);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        String newAccessToken = jwtService.generateAccessToken(userDetails);
-
-        return ResponseEntity.ok(new TokenResponse(newAccessToken));
-    }
-
     @PostMapping(ApiEndpoint.AUTH_REGISTER)
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         // register user
@@ -73,4 +47,5 @@ public class AuthController {
         // reset password
         return null;
     }
+
 }
