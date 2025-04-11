@@ -8,7 +8,19 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+  security:
+    user:
+      name: admin
+      password: secret123
 
+jwt:
+  secret: your_jwt_secret_key_here
+  access-token:
+    expiry-ms: 900000 # 15 minutes
+  refresh-token:
+    expiry-ms: 604800000 # 7 days
 
 server:
   port: ${SERVER_PORT}
