@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    @GetMapping("/users")
+    @GetMapping(ApiEndpoint.ADMIN_USERS)
     public ResponseEntity<?> getAllUsers() {
         // return list of users
         return null;
     }
 
-    @PutMapping("/users/{id}/roles")
+    @PutMapping(ApiEndpoint.ADMIN_USER_ROLES)
     public ResponseEntity<?> updateUserRoles(@PathVariable Long id, @RequestBody RoleUpdateRequest request) {
         // assign roles to user
         return null;
     }
 
-    @GetMapping(ApiEndpoint.ADMIN_USERS)
+    @GetMapping(ApiEndpoint.ADMIN_AUDIT_LOGS)
     public ResponseEntity<?> getAuditLogs() {
         // return system logs
         return null;
