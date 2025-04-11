@@ -1,4 +1,4 @@
-package com.codejam.codex.authzen.constanta;
+package com.codejam.codex.authzen.constants;
 
 public class AppConstant {
 
