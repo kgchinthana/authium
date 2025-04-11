@@ -16,11 +16,11 @@ spring:
       password: secret123
 
 jwt:
-  secret: your_jwt_secret_key_here
+  secret: ${JWT_SECRET}
   access-token:
-    expiry-ms: 900000 # 15 minutes
+    expiry-ms: ${JWT_ACCESS_EXPIRATION}
   refresh-token:
-    expiry-ms: 604800000 # 7 days
+    expiry-ms: ${JWT_REFRESH_EXPIRATION}
 
 server:
   port: ${SERVER_PORT}
