@@ -1,6 +1,7 @@
 package com.codejam.codex.authzen.controllers;
 
 
+import com.codejam.codex.authzen.constanta.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.UpdateUserRequest;
 import com.codejam.codex.authzen.models.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,23 +10,23 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(ApiEndpoint.USER)
 @PreAuthorize("hasRole('USER')")
 public class UserController {
 
-    @GetMapping("/me")
+    @GetMapping(ApiEndpoint.AUTH_ME)
     public ResponseEntity<?> getProfile() {
         // return user details
         return null;
     }
 
-    @PutMapping("/update")
+    @PutMapping(ApiEndpoint.AUTH_UPDATE)
     public ResponseEntity<?> updateProfile(@RequestBody UpdateUserRequest request) {
         // update user info
         return null;
     }
 
-    @PostMapping("/logout")
+    @PostMapping(ApiEndpoint.AUTH_LOGOUT)
     public ResponseEntity<?> logout(HttpServletRequest request) {
         // invalidate token/session
         return null;

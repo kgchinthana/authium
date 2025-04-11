@@ -1,5 +1,6 @@
 package com.codejam.codex.authzen.controllers;
 
+import com.codejam.codex.authzen.constanta.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
@@ -9,7 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping(ApiEndpoint.ADMIN)
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
@@ -25,19 +26,19 @@ public class AdminController {
         return null;
     }
 
-    @GetMapping("/audit-logs")
+    @GetMapping(ApiEndpoint.ADMIN_USERS)
     public ResponseEntity<?> getAuditLogs() {
         // return system logs
         return null;
     }
 
-    @PostMapping("/roles")
+    @PostMapping(ApiEndpoint.ADMIN_ROLES)
     public ResponseEntity<?> createRole(@RequestBody RoleRequest request) {
         // create new role
         return null;
     }
 
-    @PostMapping("/delegate")
+    @PostMapping(ApiEndpoint.ADMIN_DELEGATE)
     public ResponseEntity<?> delegatePermissions(@RequestBody DelegateRequest request) {
         // delegate permission/role
         return null;
