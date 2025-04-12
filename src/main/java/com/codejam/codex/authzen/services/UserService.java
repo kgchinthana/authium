@@ -11,23 +11,33 @@ import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+    public UserResponse loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
         User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        UserBuilder builder = org.springframework.security.core.userdetails.User.withUsername(user.getUsername());
-        builder.password(user.getPassword());
-        builder.roles("USER"); // You can dynamically load roles if needed
-        return builder.build();
+        // Extract role names
+        Set<String> roles = user.getUserRoles()
+                .stream()
+                .map(userRole -> userRole.getRole().getName())
+                .collect(Collectors.toSet());
+
+        return UserResponse.builder()
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .roles(roles) // ensure UserResponse has a "roles" field of type Set<String> or List<String>
+                .build();
     }
+
 
     public UserResponse getProfile(String username) {
         User user = userRepository.findByUsername(username)

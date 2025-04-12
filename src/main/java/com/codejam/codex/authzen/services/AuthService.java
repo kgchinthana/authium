@@ -1,6 +1,8 @@
 package com.codejam.codex.authzen.services;
 
 import com.codejam.codex.authzen.dtos.inputs.*;
+import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
+import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.User;
 import com.codejam.codex.authzen.repositories.UserRepository;
 import com.codejam.codex.authzen.utils.EmailUtil;
@@ -19,16 +21,16 @@ import java.util.Optional;
 public class AuthService {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailUtil emailUtil; // Inject EmailUtils
 
     @Autowired
-    public AuthService(JwtService jwtService, UserDetailsService userDetailsService, UserRepository userRepository,
+    public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
                        BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil) {
         this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailUtil = emailUtil; // Injected
@@ -63,15 +65,18 @@ public class AuthService {
      * @param request The login request containing user credentials.
      * @return Access token if authentication is successful, null otherwise.
      */
-    public String authenticateUser(LoginRequest request) {
+    public TokenResponse authenticateUser(LoginRequest request) {
         Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                return jwtService.generateAccessToken(userDetailsService.loadUserByUsername(user.getEmail()));
+                UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
+                String accessToken = jwtService.generateAccessToken(userResponse);
+                String refreshToken = jwtService.generateRefreshToken(userResponse);
+                return new TokenResponse(accessToken, refreshToken);
             }
         }
-        return null; // Invalid credentials
+        return null;
     }
 
     /**
@@ -80,12 +85,12 @@ public class AuthService {
      * @param request The OAuth login request containing OAuth credentials.
      * @return OAuth token if successful, null otherwise.
      */
-    public String authenticateOAuth(OAuthRequest request) {
-        // Placeholder for OAuth authentication logic
-        // This should interact with an OAuth provider like Google, Facebook, etc.
-        // For now, we simulate it with a success message.
+    public TokenResponse authenticateOAuth(OAuthRequest request) {
         if (request.getOauthToken() != null && !request.getOauthToken().isEmpty()) {
-            return jwtService.generateAccessToken(userDetailsService.loadUserByUsername(request.getOauthToken()));
+            UserResponse userResponse = userService.loadUserByUsername(request.getOauthToken());
+            String accessToken = jwtService.generateAccessToken(userResponse);
+            String refreshToken = jwtService.generateRefreshToken(userResponse);
+            return new TokenResponse(accessToken, refreshToken);
         }
         return null;
     }
@@ -138,7 +143,7 @@ public class AuthService {
         }
 
         final String username = jwtService.extractUsername(token);
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserResponse userDetails = userService.loadUserByUsername(username);
         return jwtService.isTokenValid(token, userDetails);
     }
 
@@ -164,9 +169,9 @@ public class AuthService {
         return jwtService.extractUsername(token);
     }
 
-    public UserDetails getUserDetails(String username) {
+    public UserResponse getUserDetails(String username) {
         try {
-            return userDetailsService.loadUserByUsername(username);
+            return userService.loadUserByUsername(username);
         } catch (Exception e) {
             return null;
         }

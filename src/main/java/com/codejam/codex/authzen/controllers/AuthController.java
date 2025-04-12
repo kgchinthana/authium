@@ -53,9 +53,9 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_LOGIN)
     public ResponseEntity<AuthzenResponse<?>> login(@RequestBody LoginRequest request) {
         try {
-            String token = authService.authenticateUser(request);
+            TokenResponse token = authService.authenticateUser(request);
             if (token != null) {
-                return ResponseEntity.ok(new AuthzenResponse<>(new TokenResponse(token)));
+                return ResponseEntity.ok(new AuthzenResponse<>(token));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new AuthzenResponse<>(null, false, "Invalid credentials"));
@@ -75,9 +75,9 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_OAUTH)
     public ResponseEntity<AuthzenResponse<?>> oauthLogin(@RequestBody OAuthRequest request) {
         try {
-            String oauthToken = authService.authenticateOAuth(request);
+            TokenResponse oauthToken = authService.authenticateOAuth(request);
             if (oauthToken != null) {
-                return ResponseEntity.ok(new AuthzenResponse<>(new TokenResponse(oauthToken)));
+                return ResponseEntity.ok(new AuthzenResponse<>(oauthToken));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new AuthzenResponse<>(null, false, "OAuth login failed"));

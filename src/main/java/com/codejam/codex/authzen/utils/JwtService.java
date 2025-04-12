@@ -1,7 +1,9 @@
 package com.codejam.codex.authzen.utils;
 
+import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,13 @@ public class JwtService {
     @Value("${jwt.refresh-token.expiry-ms}")
     private long refreshTokenExpiry;
 
+    @PostConstruct
+    public void validateSecretLength() {
+        if (jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret key must be at least 32 bytes (256 bits) long.");
+        }
+    }
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
@@ -41,11 +50,9 @@ public class JwtService {
         return resolver.apply(claims);
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, UserResponse userDetails) {
         final String username = extractUsername(token);
-        return username != null
-                && username.equals(userDetails.getUsername())
-                && !isTokenExpired(token);
+        return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     public boolean isTokenValid(String token) {
@@ -57,11 +64,15 @@ public class JwtService {
         }
     }
 
-    public String generateAccessToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiry);
+    public String generateAccessToken(UserResponse userResponse) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userResponse.getId());
+        claims.put("username", userResponse.getUsername());
+        claims.put("role", userResponse.getRoles());
+        return buildToken(claims, userResponse.getUsername(), accessTokenExpiry);
     }
 
-    public String generateRefreshToken(UserDetails userDetails) {
+    public String generateRefreshToken(UserResponse userDetails) {
         return buildToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiry);
     }
 
