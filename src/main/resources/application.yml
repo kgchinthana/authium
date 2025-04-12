@@ -15,6 +15,21 @@ spring:
       name: admin
       password: secret123
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: smtp
+    tls: true
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 jwt:
   secret: your_jwt_secret_key_here
   access-token:
@@ -24,3 +39,7 @@ jwt:
 
 server:
   port: ${SERVER_PORT}
+
+email:
+  from: ${EMAIL_FROM}
+

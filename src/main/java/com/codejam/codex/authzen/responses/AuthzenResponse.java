@@ -7,24 +7,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-public class AuthzenResponse<T>
-{
+public class AuthzenResponse<T> {
+
     private static final String SUCCESSFUL = "successful";
     private static final String UNSUCCESSFUL = "unsuccessful";
 
-    @Setter
     private String status;
 
     @Setter
     private List<T> results;
 
+    @Setter
+    private boolean success;
+
+    @Setter
+    private String message;
+
     /**
      * Default constructor, initializes with a "successful" status and an empty results list.
      */
-    public AuthzenResponse()
-    {
-        status = SUCCESSFUL;
-        results = new ArrayList<>();
+    public AuthzenResponse() {
+        this.status = SUCCESSFUL;
+        this.success = true;
+        this.results = new ArrayList<>();
     }
 
     /**
@@ -32,12 +37,24 @@ public class AuthzenResponse<T>
      *
      * @param data The data object to include in the results.
      */
-    public AuthzenResponse( T data )
-    {
+    public AuthzenResponse(T data) {
         this();
-        addResult( data );
+        addResult(data);
     }
 
+    /**
+     * Constructor that initializes with a status and a message.
+     *
+     * @param results The list of results to return.
+     * @param success Whether the operation was successful or not.
+     * @param message The message to include with the response.
+     */
+    public AuthzenResponse(List<T> results, boolean success, String message) {
+        this.status = success ? SUCCESSFUL : UNSUCCESSFUL;
+        this.results = results != null ? results : new ArrayList<>();
+        this.success = success;
+        this.message = message;
+    }
 
     /**
      * Adds a data object to the results list if it is not null.
@@ -48,5 +65,23 @@ public class AuthzenResponse<T>
         if (data != null) {
             results.add(data);
         }
+    }
+
+    /**
+     * Adds multiple data objects to the results list.
+     *
+     * @param data The collection of data objects to add to the results.
+     */
+    public void addResults(List<T> data) {
+        if (data != null) {
+            this.results.addAll(data);
+        }
+    }
+
+    /**
+     * Sets the status to unsuccessful if certain conditions are met (custom use case).
+     */
+    public void markUnsuccessful() {
+        this.status = UNSUCCESSFUL;
     }
 }
