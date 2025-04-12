@@ -86,7 +86,7 @@ public class UserController {
         }
 
         String username = jwtService.extractUsername(refreshToken);
-        UserDetails userDetails = authService.getUserDetails(username);
+        UserResponse userDetails = authService.getUserDetails(username);
 
         if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -94,6 +94,7 @@ public class UserController {
         }
 
         String newAccessToken = jwtService.generateAccessToken(userDetails);
-        return ResponseEntity.ok(new TokenResponse(newAccessToken));
+        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+        return ResponseEntity.ok(new TokenResponse(newAccessToken, newRefreshToken));
     }
 }
