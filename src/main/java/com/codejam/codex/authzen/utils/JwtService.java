@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class JwtService {
     private long refreshTokenExpiry;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String extractUsername(String token) {
@@ -36,36 +37,46 @@ public class JwtService {
     }
 
     public <T> T extractClaim(String token, java.util.function.Function<Claims, T> resolver) {
-        final Claims claims = extractAllClaims(token);
+        Claims claims = extractAllClaims(token);
         return resolver.apply(claims);
     }
 
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return username != null
+                && username.equals(userDetails.getUsername())
+                && !isTokenExpired(token);
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     public String generateAccessToken(UserDetails userDetails) {
-        return buildToken(userDetails, accessTokenExpiry);
+        return buildToken(new HashMap<>(), userDetails.getUsername(), accessTokenExpiry);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return buildToken(userDetails, refreshTokenExpiry);
+        return buildToken(new HashMap<>(), userDetails.getUsername(), refreshTokenExpiry);
     }
 
-    private String buildToken(UserDetails userDetails, long expiry) {
-        Map<String, Object> claims = new HashMap<>();
+    private String buildToken(Map<String, Object> claims, String subject, long expiry) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setSubject(subject)
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiry))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public boolean isTokenValid(String token) {
-        try {
-            extractAllClaims(token); // throws if invalid
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
 
     private Claims extractAllClaims(String token) {

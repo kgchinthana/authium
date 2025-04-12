@@ -12,6 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResetRequest {
+
     @NotBlank
     @Email
     private String email;

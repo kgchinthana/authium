@@ -15,5 +15,5 @@ public class OAuthRequest {
     private String provider;
 
     @NotBlank
-    private String token;
+    private String oauthToken;
 }
