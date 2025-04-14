@@ -14,7 +14,6 @@ spring:
     user:
       name: admin
       password: secret123
-
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -29,6 +28,9 @@ spring:
           starttls:
             enable: true
             required: true
+  web:
+    resources:
+      static-locations: classpath:/static/
 
 jwt:
   secret: your_jwt_secret_key_here
@@ -43,3 +45,7 @@ server:
 email:
   from: ${EMAIL_FROM}
 
+github:
+  client-id: ${GITHUB_CLIENT_ID}
+  client-secret: ${GITHUB_CLIENT_SECRET}
+  redirect-uri: ${GITHUB_REDIRECT_URI}

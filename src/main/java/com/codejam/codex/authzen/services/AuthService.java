@@ -3,7 +3,11 @@ package com.codejam.codex.authzen.services;
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
+import com.codejam.codex.authzen.models.EmailToken;
+import com.codejam.codex.authzen.models.OauthProvider;
 import com.codejam.codex.authzen.models.User;
+import com.codejam.codex.authzen.repositories.EmailTokenRepository;
+import com.codejam.codex.authzen.repositories.OauthProviderRepository;
 import com.codejam.codex.authzen.repositories.UserRepository;
 import com.codejam.codex.authzen.utils.EmailUtil;
 import com.codejam.codex.authzen.utils.JwtService;
@@ -14,7 +18,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Service
@@ -24,16 +33,22 @@ public class AuthService {
     private final UserService userService;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final EmailUtil emailUtil; // Inject EmailUtils
+    private final EmailUtil emailUtil;
+    private final EmailTokenRepository emailTokenRepository;
+    private final OauthProviderRepository oauthProviderRepository;
+    private final OAuthService oAuthService;
 
     @Autowired
     public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
-                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil) {
+                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil, EmailTokenRepository emailTokenRepository, OauthProviderRepository oauthProviderRepository, OAuthService oauthService, OAuthService oAuthService) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailUtil = emailUtil; // Injected
+        this.emailTokenRepository = emailTokenRepository;
+        this.oauthProviderRepository = oauthProviderRepository;
+        this.oAuthService = oAuthService;
     }
 
     /**
@@ -86,11 +101,43 @@ public class AuthService {
      * @return OAuth token if successful, null otherwise.
      */
     public TokenResponse authenticateOAuth(OAuthRequest request) {
-        if (request.getOauthToken() != null && !request.getOauthToken().isEmpty()) {
-            UserResponse userResponse = userService.loadUserByUsername(request.getOauthToken());
-            String accessToken = jwtService.generateAccessToken(userResponse);
-            String refreshToken = jwtService.generateRefreshToken(userResponse);
-            return new TokenResponse(accessToken, refreshToken);
+        if ("github".equalsIgnoreCase(request.getProvider())) {
+            String accessToken = oAuthService.getGithubAccessToken(request.getOauthToken());
+            Map<String, Object> githubUser = oAuthService.getGithubUser(accessToken);
+
+            String githubId = githubUser.get("id").toString();
+            String githubEmail = (String) githubUser.get("email");
+            String githubLogin = (String) githubUser.get("login");
+
+            // Check if provider mapping exists
+            Optional<OauthProvider> providerOpt = oauthProviderRepository.findByProviderAndExternalUserId("github", githubId);
+
+            User user;
+            if (providerOpt.isPresent()) {
+                user = providerOpt.get().getUser();
+            } else {
+                // Check by email (if exists)
+                user = userRepository.findByEmail(githubEmail)
+                        .orElseGet(() -> userRepository.save(User.builder()
+                                .username(githubLogin)
+                                .email(githubEmail)
+                                .password("") // no password
+                                .isActive(true)
+                                .isLocked(false)
+                                .build()));
+
+                oauthProviderRepository.save(OauthProvider.builder()
+                        .provider("github")
+                        .externalUserId(githubId)
+                        .user(user)
+                        .build());
+            }
+
+            UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
+            return new TokenResponse(
+                    jwtService.generateAccessToken(userResponse),
+                    jwtService.generateRefreshToken(userResponse)
+            );
         }
         return null;
     }
@@ -104,14 +151,27 @@ public class AuthService {
     public boolean sendPasswordResetEmail(ResetRequest request) {
         Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
         if (userOptional.isPresent()) {
-            // Generate the reset link (in this case, just a placeholder)
-            String resetLink = "http://localhost:8080/reset-password?token=sampleToken";
-            String subject = "Reset Password";
-            String body = "Your password has been reset!";
+            User user = userOptional.get();
+
+            EmailToken token = EmailToken.builder()
+                    .user(user)
+                    .token(UUID.randomUUID().toString())
+                    .purpose("RESET_PASSWORD")
+                    .expiresAt(Timestamp.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                    .build();
+
+            emailTokenRepository.save(token);
+
+            String resetLink = "http://localhost:8080/reset-password/reset-password.html?token=" + token.getToken();
+
+            String subject = "Password Reset Request";
+            String body = "You have requested to reset your password. Click the link below to reset your password:\n" + resetLink;
+
             return emailUtil.sendPasswordResetEmail(request.getEmail(), subject, body, resetLink);
         }
-        return false; // User not found
+        return false;
     }
+
 
     /**
      * Resets the user's password using the provided token.
@@ -120,14 +180,35 @@ public class AuthService {
      * @return true if the password was successfully reset, false otherwise.
      */
     public boolean resetUserPassword(ResetPasswordRequest request) {
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-            userRepository.save(user);
-            return true;
+        Optional<EmailToken> tokenOptional = emailTokenRepository.findByToken(request.getToken());
+        if (tokenOptional.isPresent()) {
+            EmailToken token = tokenOptional.get();
+
+            if (token.getExpiresAt().before(Timestamp.from(Instant.now()))) {
+                return false;
+            }
+
+            if (!"RESET_PASSWORD".equals(token.getPurpose())) {
+                return false;
+            }
+
+            Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
+
+                if (!user.equals(token.getUser())) {
+                    return false;
+                }
+
+                user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                userRepository.save(user);
+
+                emailTokenRepository.delete(token);
+
+                return true;
+            }
         }
-        return false; // User not found or invalid token
+        return false;
     }
 
     /**
