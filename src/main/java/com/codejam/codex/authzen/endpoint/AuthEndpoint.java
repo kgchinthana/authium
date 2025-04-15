@@ -100,4 +100,16 @@ public class AuthEndpoint {
     public boolean resetUserPassword(ResetPasswordRequest request) {
         return authService.resetUserPassword(request);
     }
+
+
+    /**
+     * Blacklists the token associated with the incoming request.
+     *
+     * @param request HttpServletRequest containing the token to be blacklisted.
+     * @return true if the token was successfully added to the blacklist; false otherwise.
+     */
+    public boolean blacklistToken(HttpServletRequest request) {
+        return authService.blacklistToken(request);
+    }
+
 }
