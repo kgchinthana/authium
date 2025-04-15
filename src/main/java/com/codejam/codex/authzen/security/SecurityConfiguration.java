@@ -50,10 +50,9 @@ public class SecurityConfiguration {
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 
-        // Use default converter and customize it if needed
+        // Customize JWT authorities converter to map roles from JWT claim
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // Ensure the claim name in JWT is 'roles'
 
         converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return converter;
@@ -67,14 +66,24 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/authenticate/auth/register", "/api/authenticate/auth/login", "/api/authenticate/auth/oauth",
-                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password", "/api/authenticate/user/refresh", "/reset-password/**",
+                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password", "/api/authenticate/user/refresh", "/reset-password/**", "/api/authenticate/user/me",
                                 "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> {
+                                    try {
+                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom JWT converter
+                                                .decoder(jwtDecoder(rsaKey(keyPair())));
+                                    } catch (JOSEException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                } // Use your RSA key-based JWT decoder
+                        )
+                )
                 .headers(headers -> {
                     headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"));
                     headers.defaultsDisabled().addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"));
@@ -84,6 +93,8 @@ public class SecurityConfiguration {
 
         return httpSecurity.build();
     }
+
+
 
 
 

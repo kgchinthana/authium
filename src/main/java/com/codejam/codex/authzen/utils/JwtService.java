@@ -5,7 +5,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -68,7 +67,7 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userResponse.getId());
         claims.put("username", userResponse.getUsername());
-        claims.put("role", userResponse.getRoles());
+        claims.put("roles", userResponse.getRoles());
         return buildToken(claims, userResponse.getUsername(), accessTokenExpiry);
     }
 
