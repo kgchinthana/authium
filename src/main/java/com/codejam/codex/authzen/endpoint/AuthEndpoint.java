@@ -2,6 +2,7 @@ package com.codejam.codex.authzen.endpoint;
 
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
+import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,4 +113,7 @@ public class AuthEndpoint {
         return authService.blacklistToken(request);
     }
 
+    public UserResponse getUserDetails(String username) {
+        return authService.getUserDetails(username);
+    }
 }
