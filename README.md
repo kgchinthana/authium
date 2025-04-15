@@ -213,7 +213,7 @@ Content-Type: application/json
 2. Fix a bug or implement a feature
 3. Submit a pull request
 
-For the open-source competition, check the [`issues`](https://github.com/your-org/authzen/issues) tab for bugs to solve!
+For the open-source competition, check the [`issues`]([https://github.com/your-org/authzen/issues](https://github.com/CodeJam-by-CSE/University-Java/issues)) tab for bugs to solve!
 
 ---
 
