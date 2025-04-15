@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(ApiEndpoint.USER)
-//@PreAuthorize("hasRole('USER')")      // commented due to 403 error. need to recheck this
+//@PreAuthorize("hasRole('USER')")      // commented due to 403 error. need to recheck this.
 public class UserController {
 
     private final JwtService jwtService;
