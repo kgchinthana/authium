@@ -46,35 +46,67 @@ A secure, extensible authentication and authorization backend for modern applica
 
 ### 🔐 Secured (Authenticated User)
 
-| Method | Endpoint        | Description                       |
-|--------|-----------------|-----------------------------------|
-| GET    | `/auth/me`      | Get logged-in user profile        |
-| PUT    | `/auth/update`  | Update profile                    |
-| POST   | `/auth/logout`  | Logout & revoke refresh token     |
+| Method | Endpoint        | Description                |
+|--------|-----------------|----------------------------|
+| GET    | `/auth/me`      | Get logged-in user profile |
+| PUT    | `/auth/update`  | Update profile             |
+| POST   | `/auth/logout`  | Logout                     |
+| POST   | `/auth/refresh` | Revoke refresh token       |
 
 ### 🛠️ Admin Only
 
-| Method | Endpoint                    | Description                         |
-|--------|-----------------------------|-------------------------------------|
-| GET    | `/admin/users`              | View all users                      |
-| PUT    | `/admin/users/{id}/roles`  | Update user roles                   |
-| GET    | `/admin/audit-logs`         | View audit logs                     |
-| GET    | `/admin/roles`              | List all available roles            |
-| POST   | `/admin/delegate`           | Delegate admin role to another user|
+| Method | Endpoint               | Description                         |
+|--------|------------------------|-------------------------------------|
+| GET    | `/admin/users`         | View all users                      |
+| PUT    | `/admin/users/{id}/roles` | Update user roles to relevent user  |
+| GET    | `/admin/audit-logs`    | View audit logs                     |
+| GET    | `/admin/roles`         | List all available roles            |
+| POST   | `/admin/delegate`      | Delegate admin role to another user |
+| POST   | `/admin/users/roles`  | Update user roles                   |
 
 ---
 
 ## 🎓 Project Structure
 
 ```
-com.codejam.codex.authzen
-├── config         # Security & app configurations
-├── controllers   # REST API endpoints
-├── services      # Business logic
-├── models        # JPA entities
-├── repositories  # Data access layer
-├── dto           # Request & response DTOs
-└── utils          # Utility classes (e.g., JWT utils)
+Authzen/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── codejam/
+│   │   │           └── codex/
+│   │   │               └── authzen/
+│   │   │                   ├── AuthzenApplication.java
+│   │   │                   ├── config/               # Spring configuration beans
+│   │   │                   ├── constants/            # Static final values (messages, keys, etc.)
+│   │   │                   ├── controller/           # REST controllers (expose API endpoints)
+│   │   │                   ├── dto/                  # Request/Response DTOs
+│   │   │                   ├── endpoint/             # Enum or constants for endpoint URLs
+│   │   │                   ├── exception/            # Custom exceptions and handlers
+│   │   │                   ├── model/                # JPA entities
+│   │   │                   ├── repository/           # Spring Data JPA interfaces
+│   │   │                   ├── response/             # Custom response wrappers (if any)
+│   │   │                   ├── security/             # JWT, filter chains, config, etc.
+│   │   │                   ├── service/              # Business logic layer
+│   │   │                   └── util/                 # Utility/helper classes
+│   │   └── resources/
+│   │       ├── application.yml
+│   │       ├── static/
+│   │       │   ├── css/
+│   │       │   ├── js/
+│   │       │   └── reset-password/
+│   │       └── templates/                           # Thymeleaf or HTML files
+├── .env
+├── .gitignore
+├── Dockerfile
+├── HELP.md
+├── LICENSE.md
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+└── README.md
+
 ```
 
 ---
