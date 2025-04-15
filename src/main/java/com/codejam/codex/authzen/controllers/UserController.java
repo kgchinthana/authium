@@ -92,9 +92,16 @@ public class UserController {
                     .body(new AuthzenResponse<>(null, false, "Unauthorized"));
         }
 
-        // Token blacklisting can be added here if required.
-        return ResponseEntity.ok(new AuthzenResponse<>("Logout successful"));
+        boolean blacklisted = authEndpoint.blacklistToken(request);
+
+        if (blacklisted) {
+            return ResponseEntity.ok(new AuthzenResponse<>("Logout successful, token blacklisted"));
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new AuthzenResponse<>(null, false, "Failed to blacklist token"));
+        }
     }
+
 
     /**
      * Refreshes the access token using a valid refresh token.

@@ -42,7 +42,7 @@ public class AdminEndpoint {
      * @param userId The ID of the user to retrieve.
      * @return The User object.
      */
-    public User getUserById(Long userId) {
+    public UserResponse getUserById(Long userId) {
         return adminService.getUserById(userId);
     }
 

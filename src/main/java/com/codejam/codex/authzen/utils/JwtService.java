@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class JwtService {
@@ -24,6 +22,8 @@ public class JwtService {
 
     @Value("${jwt.refresh-token.expiry-ms}")
     private long refreshTokenExpiry;
+
+    private Set<String> blacklistedTokens = new HashSet<>();
 
     @PostConstruct
     public void validateSecretLength() {
@@ -95,5 +95,13 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public boolean isTokenBlacklisted(String token) {
+        return blacklistedTokens.contains(token);
+    }
+
+    public void blacklistToken(String token) {
+        blacklistedTokens.add(token);
     }
 }
