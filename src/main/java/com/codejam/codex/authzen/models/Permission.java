@@ -24,11 +24,8 @@ public class Permission {
     private String name;
 
     @Column
-    private String email;
-
-    @Column
     private String description;
 
-    @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "permission", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<RolePermission> rolePermissions = new HashSet<>();
 }

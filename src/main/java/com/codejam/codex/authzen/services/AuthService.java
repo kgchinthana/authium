@@ -4,14 +4,12 @@ import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.*;
-import com.codejam.codex.authzen.repositories.EmailTokenRepository;
-import com.codejam.codex.authzen.repositories.OauthProviderRepository;
-import com.codejam.codex.authzen.repositories.RoleRepository;
-import com.codejam.codex.authzen.repositories.UserRepository;
+import com.codejam.codex.authzen.repositories.*;
 import com.codejam.codex.authzen.utils.EmailUtil;
 import com.codejam.codex.authzen.utils.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -38,10 +36,11 @@ public class AuthService {
     private final OauthProviderRepository oauthProviderRepository;
     private final OAuthService oAuthService;
     private final RoleRepository roleRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
-                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil, EmailTokenRepository emailTokenRepository, OauthProviderRepository oauthProviderRepository, OAuthService oauthService, OAuthService oAuthService, RoleRepository roleRepository) {
+                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil, EmailTokenRepository emailTokenRepository, OauthProviderRepository oauthProviderRepository, OAuthService oauthService, OAuthService oAuthService, RoleRepository roleRepository, RefreshTokenRepository refreshTokenRepository) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -51,6 +50,7 @@ public class AuthService {
         this.oauthProviderRepository = oauthProviderRepository;
         this.oAuthService = oAuthService;
         this.roleRepository = roleRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     /**
@@ -106,6 +106,7 @@ public class AuthService {
                 UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
                 String accessToken = jwtService.generateAccessToken(userResponse);
                 String refreshToken = jwtService.generateRefreshToken(userResponse);
+                saveRefreshToken(user, refreshToken);
                 return new TokenResponse(accessToken, refreshToken);
             }
         }
@@ -274,5 +275,42 @@ public class AuthService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private void saveRefreshToken(User user, String token) {
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token(token)
+                .revoked(false)
+                .expiresAt(Timestamp.from(Instant.now().plus(7, ChronoUnit.DAYS))) // customize expiry
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+    }
+
+    public TokenResponse refreshToken(String refreshToken) {
+
+        RefreshToken tokenRecord = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+
+        if (tokenRecord.isRevoked() || tokenRecord.getExpiresAt().before(new Timestamp(System.currentTimeMillis()))) {
+            throw new RuntimeException("Refresh token is expired or revoked");
+        }
+
+        if (!jwtService.isTokenValid(refreshToken)) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        String username = jwtService.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserResponse userDetails = UserResponse.fromEntity(user);
+
+        String newAccessToken = jwtService.generateAccessToken(userDetails);
+        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+
+        return TokenResponse.builder().refreshToken(newAccessToken).refreshToken(newRefreshToken).build();
     }
 }
