@@ -3,11 +3,10 @@ package com.codejam.codex.authzen.services;
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
-import com.codejam.codex.authzen.models.EmailToken;
-import com.codejam.codex.authzen.models.OauthProvider;
-import com.codejam.codex.authzen.models.User;
+import com.codejam.codex.authzen.models.*;
 import com.codejam.codex.authzen.repositories.EmailTokenRepository;
 import com.codejam.codex.authzen.repositories.OauthProviderRepository;
+import com.codejam.codex.authzen.repositories.RoleRepository;
 import com.codejam.codex.authzen.repositories.UserRepository;
 import com.codejam.codex.authzen.utils.EmailUtil;
 import com.codejam.codex.authzen.utils.JwtService;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -37,10 +37,11 @@ public class AuthService {
     private final EmailTokenRepository emailTokenRepository;
     private final OauthProviderRepository oauthProviderRepository;
     private final OAuthService oAuthService;
+    private final RoleRepository roleRepository;
 
     @Autowired
     public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
-                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil, EmailTokenRepository emailTokenRepository, OauthProviderRepository oauthProviderRepository, OAuthService oauthService, OAuthService oAuthService) {
+                       BCryptPasswordEncoder passwordEncoder, EmailUtil emailUtil, EmailTokenRepository emailTokenRepository, OauthProviderRepository oauthProviderRepository, OAuthService oauthService, OAuthService oAuthService, RoleRepository roleRepository) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -49,6 +50,7 @@ public class AuthService {
         this.emailTokenRepository = emailTokenRepository;
         this.oauthProviderRepository = oauthProviderRepository;
         this.oAuthService = oAuthService;
+        this.roleRepository = roleRepository;
     }
 
     /**
@@ -63,6 +65,14 @@ public class AuthService {
             return false; // User already exists
         }
 
+        List<Role> roles = roleRepository.findByName("ROLE_USER");
+        if (roles.isEmpty()) {
+            throw new RuntimeException("Default role not found: ROLE_USER");
+        }
+        Role userRole = roles.get(0); // Assuming name is unique
+
+
+        // Create the user
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -70,9 +80,17 @@ public class AuthService {
         user.setActive(true);
         user.setLocked(false);
         user.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+
+        // Create and attach the role
+        UserRole userRoleMapping = new UserRole();
+        userRoleMapping.setUser(user);
+        userRoleMapping.setRole(userRole);
+        user.getUserRoles().add(userRoleMapping);
+
         userRepository.save(user);
         return true;
     }
+
 
     /**
      * Authenticates a user and issues an access token.
