@@ -67,7 +67,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/authenticate/auth/register", "/api/authenticate/auth/login", "/api/authenticate/auth/oauth",
-                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password", "/api/authenticate/user/refresh",
+                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password", "/api/authenticate/user/refresh", "/reset-password/**",
                                 "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
                         ).permitAll()

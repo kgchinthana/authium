@@ -30,10 +30,11 @@ public class EmailUtil {
      * @return true if email is sent successfully, false otherwise.
      */
     public boolean sendPasswordResetEmail(String toEmail, String subject, String body, String resetLink) {
-        String formattedBody = body.replace("${RESET_LINK}", resetLink);
+        String formattedBody = body.replace("${resetLink}", resetLink);
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail); // Using injected `fromEmail`
+            message.setFrom(fromEmail);
             message.setTo(toEmail);
             message.setSubject(subject);
             message.setText(formattedBody);
