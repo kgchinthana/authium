@@ -3,6 +3,7 @@ package com.codejam.codex.authzen.services;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
+import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.AuditLog;
 import com.codejam.codex.authzen.models.Role;
@@ -29,6 +30,7 @@ public class AdminService {
     private final AuditLogRepository auditLogRepository;
 
     public List<UserResponse> getAllUsers(String adminUsername) {
+        logAction(adminUsername, "User list got successfully");
         return userRepository.findAll()
                 .stream()
                 .map(UserResponse::fromEntity)
@@ -54,14 +56,25 @@ public class AdminService {
         }
 
         userRepository.save(user);
-
+        logAction(adminUsername, "User roles updated successfully");
         return "User roles updated successfully";
     }
 
 
-    public List<AuditLog> getAuditLogs(String adminUsername) {
-        return auditLogRepository.findAll();
+    public List<AuditLogResponse> getAuditLogs(String adminUsername) {
+        List<AuditLog> auditLogs = auditLogRepository.findAll();
+
+        return auditLogs.stream()
+                .map(log -> AuditLogResponse.builder()
+                        .id(log.getId())
+                        .username(log.getUser().getUsername())
+                        .actionType(log.getActionType())
+                        .ipAddress(log.getIpAddress())
+                        .timestamp(log.getTimestamp())
+                        .build())
+                .toList();
     }
+
 
     public String createRole(RoleRequest request, String adminUsername) {
         String roleName = request.getRoleName();
@@ -74,6 +87,8 @@ public class AdminService {
         role.setName(roleName);
         role.setDescription(request.getDescription());
         roleRepository.save(role);
+
+        logAction(adminUsername, "Role created successfully");
 
         return "Role created successfully";
     }
@@ -103,6 +118,7 @@ public class AdminService {
 
         user.getUserRoles().add(userRole);
         userRepository.save(user);
+        logAction(adminUsername, "Permissions delegated successfully");
 
         return "Permissions delegated successfully";
     }

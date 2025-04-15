@@ -4,6 +4,7 @@ import com.codejam.codex.authzen.constants.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
+import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.endpoint.AdminEndpoint;
 import com.codejam.codex.authzen.endpoint.AuthEndpoint;
@@ -147,7 +148,7 @@ public class AdminController {
         if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
 
         String username = authCheck.getBody();
-        List<AuditLog> auditLogs = adminEndpoint.getAuditLogs(username);
+        List<AuditLogResponse> auditLogs = adminEndpoint.getAuditLogs(username);
         return ResponseEntity.ok(new AuthzenResponse<>(auditLogs));
     }
 
