@@ -1,23 +1,32 @@
 package com.codejam.codex.authzen.security;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jose.jwk.RSAKey;
+
+// Keep existing imports like HttpSecurity, annotations, etc.
+// Remove RSA/JWK related imports if no longer needed:
+// import com.nimbusds.jose.jwk.JWKSet;
+// import com.nimbusds.jose.jwk.source.JWKSource;
+// import com.nimbusds.jose.proc.SecurityContext;
+// import com.nimbusds.jose.jwk.RSAKey;
+// import java.security.KeyPair;
+// import java.security.KeyPairGenerator;
+// import java.security.NoSuchAlgorithmException;
+// import java.security.interfaces.RSAPublicKey;
+// import java.util.UUID;
+// import org.springframework.security.oauth2.jwt.JwtEncoder;
+// import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -27,13 +36,12 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPublicKey;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
+
 
 @Configuration
 @EnableWebSecurity
@@ -46,14 +54,15 @@ import java.util.UUID;
 )
 public class SecurityConfiguration {
 
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-
-        // Customize JWT authorities converter to map roles from JWT claim
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // Ensure the claim name in JWT is 'roles'
-
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        grantedAuthoritiesConverter.setAuthorityPrefix("");
         converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
         return converter;
     }
@@ -66,7 +75,9 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/authenticate/auth/register", "/api/authenticate/auth/login", "/api/authenticate/auth/oauth",
-                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password", "/api/authenticate/user/refresh", "/reset-password/**", "/api/authenticate/user/me",
+                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password",
+                                "/api/authenticate/user/refresh",
+                                "/reset-password/**",
                                 "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
                         ).permitAll()
@@ -74,14 +85,9 @@ public class SecurityConfiguration {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> {
-                                    try {
-                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom JWT converter
-                                                .decoder(jwtDecoder(rsaKey(keyPair())));
-                                    } catch (JOSEException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                } // Use your RSA key-based JWT decoder
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom JWT converter
+                                .decoder(jwtDecoder())
                         )
                 )
                 .headers(headers -> {
@@ -94,106 +100,39 @@ public class SecurityConfiguration {
         return httpSecurity.build();
     }
 
-
-
-
-
-    /**
-     * Configures a CORS filter to allow requests from all origins with specified HTTP methods
-     * (GET, POST, PUT, DELETE, OPTIONS) and headers (Authorization, Content-Type).
-     * This setup is vital for applications interacting with various clients (web, mobile).
-     * Use '*' for origins with caution in production.
-     *
-     * @return Configured CORS filter.
-     */
     @Bean
     public CorsFilter corsFilter() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins( List.of( "*" ) ); // Customize as needed
-        config.setAllowedMethods( Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedOrigins(List.of("*")); // Customize as needed for production
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 
-    /**
-     * Creates a BCrypt password encoder.
-     * @return BCryptPasswordEncoder instance.
-     */
     @Bean
-    public BCryptPasswordEncoder passwordEncoder()
-    {
+    public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // --- REMOVED RSA BEANS ---
+    // @Bean KeyPair keyPair()
+    // @Bean RSAKey rsaKey(KeyPair keyPair)
+    // @Bean JWKSource<SecurityContext> jwkSource(RSAKey rsaKey)
+    // @Bean JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource)
+
     /**
-     * Generates a 2048-bit RSA KeyPair.
-     * @return Generated RSA KeyPair.
-     * @throws IllegalStateException on algorithm unavailability.
+     * Configures a JWT decoder using the HS256 symmetric secret key.
+     * @return Configured JwtDecoder for HS256.
      */
     @Bean
-    public KeyPair keyPair()
-    {
-        try
-        {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize( 2048 );
-            return keyPairGenerator.generateKeyPair();
+    public JwtDecoder jwtDecoder() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret key must be at least 32 bytes (256 bits) long for HS256. Check your 'jwt.secret' property.");
         }
-        catch( NoSuchAlgorithmException e )
-        {
-
-            throw new IllegalStateException("Failed to generate key pair", e);
-        }
-    }
-
-    /**
-     * Builds an RSAKey from a given KeyPair.
-     * @param keyPair Source KeyPair.
-     * @return Constructed RSAKey.
-     */
-    @Bean
-    public RSAKey rsaKey(KeyPair keyPair )
-    {
-        return new RSAKey.Builder( (RSAPublicKey) keyPair.getPublic() )
-                .privateKey( keyPair.getPrivate() )
-                .keyID( UUID.randomUUID().toString() )
-                .build();
-    }
-
-    /**
-     * Creates a JWKSource from an RSAKey.
-     * @param rsaKey Source RSAKey.
-     * @return JWKSource for key selection.
-     */
-    @Bean
-    public JWKSource<SecurityContext> jwkSource(RSAKey rsaKey)
-    {
-        JWKSet jwkSet = new JWKSet(rsaKey);
-        return (jwkSelector, context) -> jwkSelector.select(jwkSet);
-    }
-
-    /**
-     * Configures a JWT decoder with an RSA public key.
-     * @param rsaKey RSAKey for decoder.
-     * @return Configured JwtDecoder.
-     * @throws JOSEException on creation failure.
-     */
-    @Bean
-    public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException
-    {
-        return NimbusJwtDecoder.withPublicKey( rsaKey.toRSAPublicKey() ).build();
-    }
-
-    /**
-     * Sets up a JWT encoder using a JWKSource.
-     * @param jwkSource Source for encoding.
-     * @return NimbusJwtEncoder instance.
-     */
-    @Bean
-    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource)
-    {
-        return new NimbusJwtEncoder( jwkSource );
+        SecretKey key = new SecretKeySpec(keyBytes, "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(key).build();
     }
 }
