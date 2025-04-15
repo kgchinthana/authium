@@ -22,7 +22,8 @@ public class ApiEndpoint {
     public static final String AUTH_LOGOUT = "/logout";
 
     // Admin endpoints
-    public static final String ADMIN_USERS = "/users";
+    public static final String ADMIN_ALL_USERS = "/users";
+    public static final String ADMIN_USERS = "/users/{id}";
     public static final String ADMIN_USER_ROLES = "/users/{id}/roles";
     public static final String ADMIN_AUDIT_LOGS = "/audit-logs";
     public static final String ADMIN_ROLES = "/roles";

@@ -5,43 +5,48 @@ import com.codejam.codex.authzen.dtos.inputs.RefreshTokenRequest;
 import com.codejam.codex.authzen.dtos.inputs.UpdateUserRequest;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
+import com.codejam.codex.authzen.endpoint.AuthEndpoint;
 import com.codejam.codex.authzen.endpoint.UserEndpoint;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
-import com.codejam.codex.authzen.services.AuthService;
-import com.codejam.codex.authzen.utils.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Handles secured endpoints related to authenticated user actions such as
+ * viewing/updating profile, refreshing tokens, and logout.
+ */
 @RestController
 @RequestMapping(ApiEndpoint.USER)
-//@PreAuthorize("hasRole('USER')")      // commented due to 403 error. need to recheck this.
+@PreAuthorize("hasRole('USER')")
 public class UserController {
 
-    private final JwtService jwtService;
-    private final AuthService authService;
+    private final AuthEndpoint authEndpoint;
     private final UserEndpoint userEndpoint;
 
     @Autowired
-    public UserController(JwtService jwtService, AuthService authService, UserEndpoint userEndpoint) {
-        this.jwtService = jwtService;
-        this.authService = authService;
+    public UserController(AuthEndpoint authEndpoint, UserEndpoint userEndpoint) {
+        this.authEndpoint = authEndpoint;
         this.userEndpoint = userEndpoint;
     }
 
+    /**
+     * Retrieves the authenticated user's profile.
+     *
+     * @param request HttpServletRequest with access token
+     * @return User profile in standardized response format
+     */
     @GetMapping(ApiEndpoint.AUTH_ME)
     public ResponseEntity<AuthzenResponse<UserResponse>> getProfile(HttpServletRequest request) {
-        if (!authService.isAuthenticated(request)) {
+        if (!authEndpoint.isAuthenticated(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthzenResponse<>(null, false, "Unauthorized: Invalid or missing token"));
         }
 
-        String username = authService.getUsername(request);
+        String username = authEndpoint.getUsername(request);
         if (username == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthzenResponse<>(null, false, "Unauthorized: Cannot extract username"));
@@ -51,51 +56,60 @@ public class UserController {
         return ResponseEntity.ok(new AuthzenResponse<>(profile));
     }
 
+    /**
+     * Updates the authenticated user's profile.
+     *
+     * @param request       HttpServletRequest with access token
+     * @param updateRequest Updated user information
+     * @return Success message
+     */
     @PutMapping(ApiEndpoint.AUTH_UPDATE)
     public ResponseEntity<AuthzenResponse<?>> updateProfile(
             HttpServletRequest request,
             @RequestBody UpdateUserRequest updateRequest
     ) {
-        if (!authService.isAuthenticated(request)) {
+        if (!authEndpoint.isAuthenticated(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthzenResponse<>(null, false, "Unauthorized"));
         }
 
-        String username = authService.getUsername(request);
+        String username = authEndpoint.getUsername(request);
         userEndpoint.updateUser(username, updateRequest);
         return ResponseEntity.ok(new AuthzenResponse<>("User updated successfully"));
     }
 
+    /**
+     * Logs out the authenticated user.
+     * Note: This is a stateless operation unless token blacklisting is implemented.
+     *
+     * @param request HttpServletRequest with access token
+     * @return Success message
+     */
     @PostMapping(ApiEndpoint.AUTH_LOGOUT)
     public ResponseEntity<AuthzenResponse<?>> logout(HttpServletRequest request) {
-        if (!authService.isAuthenticated(request)) {
+        if (!authEndpoint.isAuthenticated(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthzenResponse<>(null, false, "Unauthorized"));
         }
 
-        // Optional: Blacklist token or mark session as invalidated
+        // Token blacklisting can be added here if required.
         return ResponseEntity.ok(new AuthzenResponse<>("Logout successful"));
     }
 
+    /**
+     * Refreshes the access token using a valid refresh token.
+     *
+     * @param request RefreshTokenRequest with refresh token
+     * @return New access and refresh token pair
+     */
     @PostMapping(ApiEndpoint.AUTH_REFRESH)
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
-
-        if (!jwtService.isTokenValid(refreshToken)) {
+    public ResponseEntity<AuthzenResponse<?>> refreshToken(@RequestBody RefreshTokenRequest request) {
+        try {
+            TokenResponse tokenResponse = authEndpoint.refreshToken(request.getRefreshToken());
+            return ResponseEntity.ok(new AuthzenResponse<>(tokenResponse));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthzenResponse<>(null, false, "Invalid refresh token"));
+                    .body(new AuthzenResponse<>(null, false, e.getMessage()));
         }
-
-        String username = jwtService.extractUsername(refreshToken);
-        UserResponse userDetails = authService.getUserDetails(username);
-
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthzenResponse<>(null, false, "User not found"));
-        }
-
-        String newAccessToken = jwtService.generateAccessToken(userDetails);
-        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
-        return ResponseEntity.ok(new TokenResponse(newAccessToken, newRefreshToken));
     }
 }

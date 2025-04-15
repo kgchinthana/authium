@@ -4,21 +4,25 @@ import com.codejam.codex.authzen.constants.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
-import com.codejam.codex.authzen.services.AuthService;
+import com.codejam.codex.authzen.endpoint.AuthEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller responsible for handling HTTP requests related to authentication,
+ * including user registration, login, password reset, and OAuth login.
+ */
 @RestController
 @RequestMapping(ApiEndpoint.AUTH)
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthEndpoint authEndpoint;
 
     @Autowired
-    public AuthController(AuthService authService) {
-        this.authService = authService;
+    public AuthController(AuthEndpoint authEndpoint) {
+        this.authEndpoint = authEndpoint;
     }
 
     /**
@@ -30,7 +34,7 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_REGISTER)
     public ResponseEntity<AuthzenResponse<?>> register(@RequestBody RegisterRequest request) {
         try {
-            boolean isRegistered = authService.registerUser(request);
+            boolean isRegistered = authEndpoint.registerUser(request);
             if (isRegistered) {
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(new AuthzenResponse<>("User registered successfully"));
@@ -53,7 +57,7 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_LOGIN)
     public ResponseEntity<AuthzenResponse<?>> login(@RequestBody LoginRequest request) {
         try {
-            TokenResponse token = authService.authenticateUser(request);
+            TokenResponse token = authEndpoint.authenticateUser(request);
             if (token != null) {
                 return ResponseEntity.ok(new AuthzenResponse<>(token));
             } else {
@@ -75,7 +79,7 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_OAUTH)
     public ResponseEntity<AuthzenResponse<?>> oauthLogin(@RequestBody OAuthRequest request) {
         try {
-            TokenResponse oauthToken = authService.authenticateOAuth(request);
+            TokenResponse oauthToken = authEndpoint.authenticateOAuth(request);
             if (oauthToken != null) {
                 return ResponseEntity.ok(new AuthzenResponse<>(oauthToken));
             } else {
@@ -97,7 +101,7 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_RESET_REQUEST)
     public ResponseEntity<AuthzenResponse<?>> resetPasswordRequest(@RequestBody ResetRequest request) {
         try {
-            boolean emailSent = authService.sendPasswordResetEmail(request);
+            boolean emailSent = authEndpoint.sendPasswordResetEmail(request);
             if (emailSent) {
                 return ResponseEntity.ok(new AuthzenResponse<>("Password reset email sent"));
             } else {
@@ -119,7 +123,7 @@ public class AuthController {
     @PostMapping(ApiEndpoint.AUTH_RESET_PASSWORD)
     public ResponseEntity<AuthzenResponse<?>> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
-            boolean isPasswordReset = authService.resetUserPassword(request);
+            boolean isPasswordReset = authEndpoint.resetUserPassword(request);
             if (isPasswordReset) {
                 return ResponseEntity.ok(new AuthzenResponse<>("Password reset successfully"));
             } else {
