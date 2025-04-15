@@ -6,8 +6,12 @@ import com.codejam.codex.authzen.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * Endpoint responsible for user-related operations such as fetching and updating profiles.
+ */
 @Component
 public class UserEndpoint {
+
     private final UserService userService;
 
     @Autowired
@@ -15,10 +19,22 @@ public class UserEndpoint {
         this.userService = userService;
     }
 
+    /**
+     * Fetches the profile of the user by username.
+     *
+     * @param username Username of the user
+     * @return UserResponse DTO containing profile data
+     */
     public UserResponse getProfile(String username) {
         return userService.getProfile(username);
     }
 
+    /**
+     * Updates the user profile based on the given request.
+     *
+     * @param username       Username of the user
+     * @param updateRequest  Data to update
+     */
     public void updateUser(String username, UpdateUserRequest updateRequest) {
         userService.updateUser(username, updateRequest);
     }
