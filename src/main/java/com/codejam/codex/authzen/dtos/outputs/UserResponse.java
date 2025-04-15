@@ -4,6 +4,7 @@ import com.codejam.codex.authzen.models.User;
 import lombok.*;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -18,6 +19,16 @@ public class UserResponse {
     private Set<String> roles;
 
     public static UserResponse fromEntity(User user) {
-        return UserResponse.builder().id(user.getId()).username(user.getUsername()).email(user.getEmail()).build();
+        Set<String> roleNames = user.getUserRoles().stream()
+                .map(userRole -> userRole.getRole().getName())
+                .collect(Collectors.toSet());
+
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .roles(roleNames)
+                .build();
     }
+
 }

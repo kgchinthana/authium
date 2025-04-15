@@ -43,11 +43,8 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .build();    }
+        return UserResponse.fromEntity(user);
+    }
 
     @Transactional
     public void updateUser(String username, UpdateUserRequest updateRequest) {
