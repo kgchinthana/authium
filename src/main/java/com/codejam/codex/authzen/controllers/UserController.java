@@ -6,6 +6,7 @@ import com.codejam.codex.authzen.dtos.inputs.UpdateUserRequest;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.endpoint.UserEndpoint;
+import com.codejam.codex.authzen.models.RefreshToken;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
 import com.codejam.codex.authzen.services.AuthService;
 import com.codejam.codex.authzen.utils.JwtService;
@@ -15,6 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.Timestamp;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(ApiEndpoint.USER)
@@ -76,24 +80,14 @@ public class UserController {
     }
 
     @PostMapping(ApiEndpoint.AUTH_REFRESH)
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
-
-        if (!jwtService.isTokenValid(refreshToken)) {
+    public ResponseEntity<AuthzenResponse<?>> refreshToken(@RequestBody RefreshTokenRequest request) {
+        try {
+            TokenResponse tokenResponse = authService.refreshToken(request.getRefreshToken());
+            return ResponseEntity.ok(new AuthzenResponse<>(tokenResponse));
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthzenResponse<>(null, false, "Invalid refresh token"));
+                    .body(new AuthzenResponse<>(null, false, e.getMessage()));
         }
-
-        String username = jwtService.extractUsername(refreshToken);
-        UserResponse userDetails = authService.getUserDetails(username);
-
-        if (userDetails == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthzenResponse<>(null, false, "User not found"));
-        }
-
-        String newAccessToken = jwtService.generateAccessToken(userDetails);
-        String newRefreshToken = jwtService.generateRefreshToken(userDetails);
-        return ResponseEntity.ok(new TokenResponse(newAccessToken, newRefreshToken));
     }
+
 }
