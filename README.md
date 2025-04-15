@@ -192,6 +192,8 @@ Content-Type: application/json
 - `oauth_providers`: linked GitHub accounts
 - `audit_logs`: admin actions tracking
 - `email_tokens`: password reset tokens
+- `permissions`: defines fine-grained permissions
+- `role_permissions`: role-permissions associations
 
 ---
 
