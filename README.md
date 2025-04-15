@@ -219,4 +219,4 @@ For the open-source competition, check the [`issues`](https://github.com/your-or
 
 ## 📃 License
 
-[MIT](LICENSE) © 2025 — CodeJam Codex Team
+[MIT](LICENSE.md) © 2025 — CodeJam Codex Team
