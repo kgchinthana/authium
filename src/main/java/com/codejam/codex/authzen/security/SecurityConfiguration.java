@@ -103,6 +103,8 @@ public class SecurityConfiguration {
                                 "/api/authenticate/auth/reset-request",
                                 "/api/authenticate/auth/reset-password",
                                 "/api/authenticate/user/refresh",
+                                "/css/**",
+                                "/js/**",
                                 "/reset-password/**",
                                 "/api/authenticate/health",
                                 "/swagger-ui.html",
