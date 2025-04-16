@@ -135,4 +135,21 @@ public class AuthController {
                     .body(new AuthzenResponse<>(null, false, "An error occurred during password reset"));
         }
     }
+
+    /**
+     * Refreshes the access token using a valid refresh token.
+     *
+     * @param request RefreshTokenRequest with refresh token
+     * @return New access and refresh token pair
+     */
+    @PostMapping(ApiEndpoint.AUTH_REFRESH)
+    public ResponseEntity<AuthzenResponse<?>> refreshToken(@RequestBody RefreshTokenRequest request) {
+        try {
+            TokenResponse tokenResponse = authEndpoint.refreshToken(request.getRefreshToken());
+            return ResponseEntity.ok(new AuthzenResponse<>(tokenResponse));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthzenResponse<>(null, false, e.getMessage()));
+        }
+    }
 }

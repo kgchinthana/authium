@@ -334,7 +334,7 @@ public class AuthService {
         String newAccessToken = jwtService.generateAccessToken(userDetails);
         String newRefreshToken = jwtService.generateRefreshToken(userDetails);
 
-        return TokenResponse.builder().refreshToken(newAccessToken).refreshToken(newRefreshToken).build();
+        return TokenResponse.builder().accessToken(newAccessToken).refreshToken(newRefreshToken).build();
     }
 
     /**
