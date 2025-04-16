@@ -58,7 +58,7 @@ public class AuthEndpoint {
      * @param request The registration request containing user details.
      * @return true if registration was successful, false otherwise.
      */
-    public boolean registerUser(RegisterRequest request) {
+    public UserResponse registerUser(RegisterRequest request) {
         return authService.registerUser(request);
     }
 

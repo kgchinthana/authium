@@ -4,6 +4,7 @@ import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
 import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.AuditLog;
 import com.codejam.codex.authzen.models.User;
@@ -55,7 +56,7 @@ public class AdminEndpoint {
      * @param adminUsername The username of the requesting admin.
      * @return A message indicating the result of the operation.
      */
-    public String updateUserRoles(Long userId, RoleUpdateRequest request, String adminUsername) {
+    public UpdateUserResponse updateUserRoles(Long userId, RoleUpdateRequest request, String adminUsername) {
         return adminService.updateUserRoles(userId, request, adminUsername);
     }
 

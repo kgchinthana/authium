@@ -1,6 +1,7 @@
 package com.codejam.codex.authzen.services;
 
 import com.codejam.codex.authzen.dtos.inputs.UpdateUserRequest;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.User;
 import com.codejam.codex.authzen.repositories.UserRepository;
@@ -49,16 +50,23 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUser(String username, UpdateUserRequest updateRequest) {
+    public UpdateUserResponse updateUser(String username, UpdateUserRequest updateRequest) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        user.setUsername(updateRequest.getUsername());
-        user.setEmail(updateRequest.getEmail());
+        if (updateRequest.getUsername() != null && !updateRequest.getUsername().isBlank()) {
+            user.setUsername(updateRequest.getUsername());
+        }
+
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().isBlank()) {
+            user.setEmail(updateRequest.getEmail());
+        }
+
         if (updateRequest.getPassword() != null && !updateRequest.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(updateRequest.getPassword()));
         }
 
-        userRepository.save(user);
+        return UpdateUserResponse.fromEntity(user);
     }
+
 }

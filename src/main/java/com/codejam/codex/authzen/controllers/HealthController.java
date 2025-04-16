@@ -1,6 +1,7 @@
 package com.codejam.codex.authzen.controllers;
 
 import com.codejam.codex.authzen.constants.ApiEndpoint;
+import com.codejam.codex.authzen.responses.AuthzenResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +15,7 @@ import java.util.Map;
 public class HealthController {
 
     @GetMapping(ApiEndpoint.HEALTH)
-    public ResponseEntity<Map<String, Object>> checkHealth() {
+    public ResponseEntity<AuthzenResponse<Map<String, Object>>> checkHealth() {
         Map<String, Object> healthStatus = new HashMap<>();
 
         healthStatus.put("status", "UP");
@@ -23,7 +24,10 @@ public class HealthController {
         healthStatus.put("timestamp", Instant.now().toString());
         healthStatus.put("uptime", getUptime());
 
-        return ResponseEntity.ok(healthStatus);
+        AuthzenResponse<Map<String, Object>> response = new AuthzenResponse<>(healthStatus);
+        response.setMessage("Health check successful");
+
+        return ResponseEntity.ok(response);
     }
 
     private String getUptime() {

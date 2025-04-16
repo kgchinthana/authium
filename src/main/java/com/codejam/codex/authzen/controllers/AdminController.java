@@ -5,6 +5,7 @@ import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
 import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.endpoint.AdminEndpoint;
 import com.codejam.codex.authzen.endpoint.AuthEndpoint;
@@ -14,6 +15,7 @@ import com.codejam.codex.authzen.responses.AuthzenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -45,18 +47,18 @@ public class AdminController {
      * @param request HttpServletRequest containing the token
      * @return ResponseEntity with username in body if valid, or error message if unauthorized/forbidden
      */
-    private ResponseEntity<String> verifyAdmin(HttpServletRequest request) {
+    private String verifyAdmin(HttpServletRequest request) {
         String username = authEndpoint.getUsername(request);
         if (username == null || !authEndpoint.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
+            throw new AccessDeniedException("Unauthorized: No token provided.");
         }
 
         UserResponse userResponse = authEndpoint.getUserDetails(username);
         if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
-            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
+            throw new AccessDeniedException("Forbidden: Insufficient permissions.");
         }
 
-        return ResponseEntity.ok(username);
+        return username;
     }
 
     /**
@@ -69,13 +71,12 @@ public class AdminController {
     @GetMapping(ApiEndpoint.ADMIN_ALL_USERS)
     @Secured("ROLE_ADMIN")
     @PreAuthorize("hasAuthority('VIEW_USER')")
-    public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
-
-        String username = authCheck.getBody();
+    public ResponseEntity<AuthzenResponse<List<UserResponse>>> getAllUsers(HttpServletRequest request) {
+        String username = verifyAdmin(request);
         List<UserResponse> users = adminEndpoint.getAllUsers(username);
-        return ResponseEntity.ok(new AuthzenResponse<>(users));
+        AuthzenResponse<List<UserResponse>> response = new AuthzenResponse<>(users);
+        response.setMessage("Users listed successfully.");
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -88,12 +89,11 @@ public class AdminController {
     @GetMapping(ApiEndpoint.ADMIN_USERS)
     @Secured("ROLE_ADMIN")
     @PreAuthorize("hasAuthority('VIEW_USER')")
-    public ResponseEntity<?> getUserDetails(@PathVariable("id") Long userId, HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
-
-        UserResponse user = adminEndpoint.getUserById(userId);
-        return ResponseEntity.ok(new AuthzenResponse<>(user));
+    public ResponseEntity<AuthzenResponse<UserResponse>> getUserDetails(@PathVariable("id") Long userId, HttpServletRequest request) {
+        UserResponse userResponse = adminEndpoint.getUserById(userId);
+        AuthzenResponse<UserResponse> response = new AuthzenResponse<>(userResponse);
+        response.setMessage("User details retrieved successfully.");
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -108,15 +108,14 @@ public class AdminController {
     @PutMapping(ApiEndpoint.ADMIN_USER_ROLES)
     @Secured("ROLE_ADMIN")
     @PreAuthorize("hasAuthority('UPDATE_USER')")
-    public ResponseEntity<AuthzenResponse<String>> updateUserRole(@PathVariable("id") Long userId,
-                                                 @RequestBody RoleUpdateRequest roleUpdateRequest,
-                                                 HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
-
-        String username = authCheck.getBody();
-        String updated = adminEndpoint.updateUserRoles(userId, roleUpdateRequest, username);
-        return ResponseEntity.ok(new AuthzenResponse<>(updated));
+    public ResponseEntity<AuthzenResponse<UpdateUserResponse>> updateUserRole(@PathVariable("id") Long userId,
+                                                                              @RequestBody RoleUpdateRequest roleUpdateRequest,
+                                                                              HttpServletRequest request) {
+        String username = verifyAdmin(request);
+        UpdateUserResponse updated = adminEndpoint.updateUserRoles(userId, roleUpdateRequest, username);
+        AuthzenResponse<UpdateUserResponse> response = new AuthzenResponse<>(updated);
+        response.setMessage("User roles updated successfully");
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -131,12 +130,11 @@ public class AdminController {
     @PreAuthorize("hasAuthority('CREATE_USER')")
     public ResponseEntity<AuthzenResponse<String>> createRole(@RequestBody RoleRequest roleRequest,
                                              HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
-
-        String username = authCheck.getBody();
+        String username = verifyAdmin(request);
         String created = adminEndpoint.createRole(roleRequest, username);
-        return ResponseEntity.ok(new AuthzenResponse<>(created));
+        AuthzenResponse<String> response = new AuthzenResponse<>();
+        response.setMessage(created);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -148,13 +146,12 @@ public class AdminController {
     @GetMapping(ApiEndpoint.ADMIN_AUDIT_LOGS)
     @Secured("ROLE_ADMIN")
     @PreAuthorize("hasAuthority('VIEW_USER')")
-    public ResponseEntity<AuthzenResponse<?>> getAuditLogs(HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
-
-        String username = authCheck.getBody();
+    public ResponseEntity<AuthzenResponse<List<AuditLogResponse>>> getAuditLogs(HttpServletRequest request) {
+        String username = verifyAdmin(request);
         List<AuditLogResponse> auditLogs = adminEndpoint.getAuditLogs(username);
-        return ResponseEntity.ok(new AuthzenResponse<>(auditLogs));
+        AuthzenResponse<List<AuditLogResponse>> response = new AuthzenResponse<>(auditLogs);
+        response.setMessage("AuditLogs listed successfully.");
+        return ResponseEntity.ok(response);
     }
 
 
@@ -171,12 +168,11 @@ public class AdminController {
     @PreAuthorize("hasAuthority('UPDATE_USER')")
     public ResponseEntity<AuthzenResponse<String>> delegatePermissions(@RequestBody DelegateRequest delegateRequest,
                                                       HttpServletRequest request) {
-        ResponseEntity<String> authCheck = verifyAdmin(request);
-        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
-
-        String username = authCheck.getBody();
+        String username = verifyAdmin(request);
         String delegated = adminEndpoint.delegatePermissions(delegateRequest, username);
-        return ResponseEntity.ok(new AuthzenResponse<>(delegated));
+        AuthzenResponse<String> response = new AuthzenResponse<>();
+        response.setMessage(delegated);
+        return ResponseEntity.ok(response);
     }
 
 

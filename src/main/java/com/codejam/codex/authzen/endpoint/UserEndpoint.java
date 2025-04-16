@@ -1,7 +1,9 @@
 package com.codejam.codex.authzen.endpoint;
 
 import com.codejam.codex.authzen.dtos.inputs.UpdateUserRequest;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
+import com.codejam.codex.authzen.models.User;
 import com.codejam.codex.authzen.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,7 +37,7 @@ public class UserEndpoint {
      * @param username       Username of the user
      * @param updateRequest  Data to update
      */
-    public void updateUser(String username, UpdateUserRequest updateRequest) {
-        userService.updateUser(username, updateRequest);
+    public UpdateUserResponse updateUser(String username, UpdateUserRequest updateRequest) {
+        return userService.updateUser(username, updateRequest);
     }
 }

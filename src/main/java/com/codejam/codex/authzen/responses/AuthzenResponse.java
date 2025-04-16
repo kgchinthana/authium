@@ -18,9 +18,6 @@ public class AuthzenResponse<T> {
     private List<T> results;
 
     @Setter
-    private boolean success;
-
-    @Setter
     private String message;
 
     /**
@@ -28,7 +25,6 @@ public class AuthzenResponse<T> {
      */
     public AuthzenResponse() {
         this.status = SUCCESSFUL;
-        this.success = true;
         this.results = new ArrayList<>();
     }
 
@@ -46,13 +42,12 @@ public class AuthzenResponse<T> {
      * Constructor that initializes with a status and a message.
      *
      * @param results The list of results to return.
-     * @param success Whether the operation was successful or not.
+     * @param successful Whether the operation was successful or not.
      * @param message The message to include with the response.
      */
-    public AuthzenResponse(List<T> results, boolean success, String message) {
-        this.status = success ? SUCCESSFUL : UNSUCCESSFUL;
+    public AuthzenResponse(List<T> results, boolean successful, String message) {
+        this.status = successful ? SUCCESSFUL : UNSUCCESSFUL;
         this.results = results != null ? results : new ArrayList<>();
-        this.success = success;
         this.message = message;
     }
 
@@ -79,7 +74,7 @@ public class AuthzenResponse<T> {
     }
 
     /**
-     * Sets the status to unsuccessful if certain conditions are met (custom use case).
+     * Sets the status to unsuccessful.
      */
     public void markUnsuccessful() {
         this.status = UNSUCCESSFUL;

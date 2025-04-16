@@ -9,9 +9,6 @@ import com.codejam.codex.authzen.utils.EmailUtil;
 import com.codejam.codex.authzen.utils.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -57,10 +54,10 @@ public class AuthService {
      * @param request The registration request containing user details.
      * @return true if registration was successful, false otherwise.
      */
-    public boolean registerUser(RegisterRequest request) {
+    public UserResponse registerUser(RegisterRequest request) {
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            return false;
+            return new UserResponse();
         }
 
         List<Role> roles = roleRepository.findByName("ROLE_USER");
@@ -69,8 +66,6 @@ public class AuthService {
         }
         Role userRole = roles.get(0);
 
-
-        // Create the user
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -79,14 +74,15 @@ public class AuthService {
         user.setLocked(false);
         user.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
-        // Create and attach the role
         UserRole userRoleMapping = new UserRole();
         userRoleMapping.setUser(user);
         userRoleMapping.setRole(userRole);
         user.getUserRoles().add(userRoleMapping);
 
         userRepository.save(user);
-        return true;
+        List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
+
+        return UserResponse.fromEntity(user, permissionNames);
     }
 
 

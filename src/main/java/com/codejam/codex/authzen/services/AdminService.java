@@ -4,6 +4,7 @@ import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
 import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.AuditLog;
 import com.codejam.codex.authzen.models.Role;
@@ -42,7 +43,7 @@ public class AdminService {
     }
 
     @Transactional
-    public String updateUserRoles(Long userId, RoleUpdateRequest request, String adminUsername) {
+    public UpdateUserResponse updateUserRoles(Long userId, RoleUpdateRequest request, String adminUsername) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -61,7 +62,7 @@ public class AdminService {
 
         userRepository.save(user);
         logAction(adminUsername, "User roles updated successfully");
-        return "User roles updated successfully";
+        return UpdateUserResponse.fromEntity(user);
     }
 
 

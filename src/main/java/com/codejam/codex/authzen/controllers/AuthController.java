@@ -3,6 +3,8 @@ package com.codejam.codex.authzen.controllers;
 import com.codejam.codex.authzen.constants.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
+import com.codejam.codex.authzen.dtos.outputs.UpdateUserResponse;
+import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
 import com.codejam.codex.authzen.endpoint.AuthEndpoint;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,19 +35,14 @@ public class AuthController {
      * @return A ResponseEntity with the result of the registration.
      */
     @PostMapping(ApiEndpoint.AUTH_REGISTER)
-    public ResponseEntity<AuthzenResponse<?>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthzenResponse<UserResponse>> register(@RequestBody RegisterRequest request) {
         try {
-            boolean isRegistered = authEndpoint.registerUser(request);
-            if (isRegistered) {
-                return ResponseEntity.status(HttpStatus.CREATED)
-                        .body(new AuthzenResponse<>("User registered successfully"));
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new AuthzenResponse<>(null, false, "Registration failed"));
-            }
+            UserResponse userResponse = authEndpoint.registerUser(request);
+            AuthzenResponse<UserResponse> response = new AuthzenResponse<>(userResponse);
+            response.setMessage("User registered successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new AuthzenResponse<>(null, false, "An error occurred during registration"));
+            throw new RuntimeException("An error occurred during registration");
         }
     }
 
@@ -56,11 +53,13 @@ public class AuthController {
      * @return A ResponseEntity with the result of the login process.
      */
     @PostMapping(ApiEndpoint.AUTH_LOGIN)
-    public ResponseEntity<AuthzenResponse<?>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthzenResponse<TokenResponse>> login(@RequestBody LoginRequest request) {
         try {
             TokenResponse token = authEndpoint.authenticateUser(request);
             if (token != null) {
-                return ResponseEntity.ok(new AuthzenResponse<>(token));
+                AuthzenResponse<TokenResponse> response = new AuthzenResponse<>(token);
+                response.setMessage("User logged successfully");
+                return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new AuthzenResponse<>(null, false, "Invalid credentials"));
@@ -78,11 +77,13 @@ public class AuthController {
      * @return A ResponseEntity with the result of the OAuth login.
      */
     @PostMapping(ApiEndpoint.AUTH_OAUTH)
-    public ResponseEntity<AuthzenResponse<?>> oauthLogin(@RequestBody OAuthRequest request) {
+    public ResponseEntity<AuthzenResponse<TokenResponse>> oauthLogin(@RequestBody OAuthRequest request) {
         try {
             TokenResponse oauthToken = authEndpoint.authenticateOAuth(request);
             if (oauthToken != null) {
-                return ResponseEntity.ok(new AuthzenResponse<>(oauthToken));
+                AuthzenResponse<TokenResponse> response = new AuthzenResponse<>(oauthToken);
+                response.setMessage("User logged successfully");
+                return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new AuthzenResponse<>(null, false, "OAuth login failed"));
@@ -100,11 +101,13 @@ public class AuthController {
      * @return A ResponseEntity with the result of the reset request.
      */
     @PostMapping(ApiEndpoint.AUTH_RESET_REQUEST)
-    public ResponseEntity<AuthzenResponse<?>> resetPasswordRequest(@RequestBody ResetRequest request) {
+    public ResponseEntity<AuthzenResponse<Object>> resetPasswordRequest(@RequestBody ResetRequest request) {
         try {
             boolean emailSent = authEndpoint.sendPasswordResetEmail(request);
             if (emailSent) {
-                return ResponseEntity.ok(new AuthzenResponse<>("Password reset email sent"));
+                AuthzenResponse<Object> response = new AuthzenResponse<>();
+                response.setMessage("Password reset email sent");
+                return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new AuthzenResponse<>(null, false, "Failed to send reset email"));
@@ -122,11 +125,13 @@ public class AuthController {
      * @return A ResponseEntity with the result of the password reset.
      */
     @PostMapping(ApiEndpoint.AUTH_RESET_PASSWORD)
-    public ResponseEntity<AuthzenResponse<?>> resetPassword(@RequestBody ResetPasswordRequest request) {
+    public ResponseEntity<AuthzenResponse<Object>> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
             boolean isPasswordReset = authEndpoint.resetUserPassword(request);
             if (isPasswordReset) {
-                return ResponseEntity.ok(new AuthzenResponse<>("Password reset successfully"));
+                AuthzenResponse<Object> response = new AuthzenResponse<>();
+                response.setMessage("Password reset successfully");
+                return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(new AuthzenResponse<>(null, false, "Failed to reset password"));
@@ -144,10 +149,12 @@ public class AuthController {
      * @return New access and refresh token pair
      */
     @PostMapping(ApiEndpoint.AUTH_REFRESH)
-    public ResponseEntity<AuthzenResponse<?>> refreshToken(@RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<AuthzenResponse<TokenResponse>> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
             TokenResponse tokenResponse = authEndpoint.refreshToken(request.getRefreshToken());
-            return ResponseEntity.ok(new AuthzenResponse<>(tokenResponse));
+            AuthzenResponse<TokenResponse> response = new AuthzenResponse<>(tokenResponse);
+            response.setMessage("User refreshed successfully");
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AuthzenResponse<>(null, false, e.getMessage()));
