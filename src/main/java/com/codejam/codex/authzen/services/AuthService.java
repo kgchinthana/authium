@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -37,6 +34,7 @@ public class AuthService {
     private final OAuthService oAuthService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final Set<String> blacklistedTokens = new HashSet<>();
 
     @Autowired
     public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
@@ -45,7 +43,7 @@ public class AuthService {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.emailUtil = emailUtil; // Injected
+        this.emailUtil = emailUtil;
         this.emailTokenRepository = emailTokenRepository;
         this.oauthProviderRepository = oauthProviderRepository;
         this.oAuthService = oAuthService;
@@ -62,14 +60,14 @@ public class AuthService {
     public boolean registerUser(RegisterRequest request) {
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            return false; // User already exists
+            return false;
         }
 
         List<Role> roles = roleRepository.findByName("ROLE_USER");
         if (roles.isEmpty()) {
             throw new RuntimeException("Default role not found: ROLE_USER");
         }
-        Role userRole = roles.get(0); // Assuming name is unique
+        Role userRole = roles.get(0);
 
 
         // Create the user
@@ -238,7 +236,7 @@ public class AuthService {
      */
     public boolean isAuthenticated(HttpServletRequest request) {
         final String token = extractTokenFromHeader(request);
-        if (token == null || !jwtService.isTokenValid(token)) {
+        if ((token == null || !jwtService.isTokenValid(token)) && isBlacklisted(token) ) {
             return false;
         }
 
@@ -256,19 +254,31 @@ public class AuthService {
     private String extractTokenFromHeader(HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7); // remove "Bearer "
+            return authHeader.substring(7);
         }
         return null;
     }
 
+    /**
+     * Retrieves the username from the token in the request.
+     *
+     * @param request The HTTP request containing the token.
+     * @return The username extracted from the token, or null if the token is invalid.
+     */
     public String getUsername(HttpServletRequest request) {
         final String token = extractTokenFromHeader(request);
-        if (token == null || !jwtService.isTokenValid(token)) {
+        if ((token == null || !jwtService.isTokenValid(token)) && isBlacklisted(token) ) {
             return null;
         }
         return jwtService.extractUsername(token);
     }
 
+    /**
+     * Retrieves user details from the username.
+     *
+     * @param username The username.
+     * @return UserResponse with the user's details, or null if the user doesn't exist.
+     */
     public UserResponse getUserDetails(String username) {
         try {
             return userService.loadUserByUsername(username);
@@ -277,18 +287,31 @@ public class AuthService {
         }
     }
 
+    /**
+     * Saves a refresh token for a user.
+     *
+     * @param user The user associated with the refresh token.
+     * @param token The refresh token to be saved.
+     */
     private void saveRefreshToken(User user, String token) {
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(token)
                 .revoked(false)
-                .expiresAt(Timestamp.from(Instant.now().plus(7, ChronoUnit.DAYS))) // customize expiry
+                .expiresAt(Timestamp.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .build();
 
         refreshTokenRepository.save(refreshToken);
     }
 
+    /**
+     * Refreshes an access token using a valid refresh token.
+     *
+     * @param refreshToken The refresh token to be used for refreshing the access token.
+     * @return TokenResponse containing new access and refresh tokens.
+     * @throws RuntimeException if the refresh token is expired or invalid.
+     */
     public TokenResponse refreshToken(String refreshToken) {
 
         RefreshToken tokenRecord = refreshTokenRepository.findByToken(refreshToken)
@@ -303,7 +326,7 @@ public class AuthService {
         }
 
         String username = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserResponse userDetails = UserResponse.fromEntity(user);
@@ -313,4 +336,37 @@ public class AuthService {
 
         return TokenResponse.builder().refreshToken(newAccessToken).refreshToken(newRefreshToken).build();
     }
+
+    /**
+     * Blacklists the token associated with the incoming request if valid and not already blacklisted.
+     *
+     * @param request HttpServletRequest containing the token to be blacklisted.
+     * @return true if the token was successfully added to the blacklist; false if the token is invalid
+     *         or already blacklisted.
+     */
+    public boolean blacklistToken(HttpServletRequest request) {
+        String token = extractTokenFromHeader(request);
+        if (token == null || !jwtService.isTokenValid(token)) {
+            return false;
+        }
+
+        if (isBlacklisted(token)) {
+            return false;
+        }
+
+        blacklistedTokens.add(token);
+        return true;
+    }
+
+    /**
+     * Checks if a token is blacklisted.
+     *
+     * @param token The token to check.
+     * @return true if the token is blacklisted, false otherwise.
+     */
+    public boolean isBlacklisted(String token) {
+        return blacklistedTokens.contains(token);
+    }
+
+
 }

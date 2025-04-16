@@ -27,7 +27,7 @@ public class AuditLog {
     @Column(name = "action_type", nullable = false)
     private String actionType;
 
-    @Column(name = "ip_address", nullable = false)
+    @Column(name = "ip_address")
     private String ipAddress;
 
     @Column(nullable = false)

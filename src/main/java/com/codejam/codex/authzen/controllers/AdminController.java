@@ -4,12 +4,13 @@ import com.codejam.codex.authzen.constants.ApiEndpoint;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
+import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.endpoint.AdminEndpoint;
+import com.codejam.codex.authzen.endpoint.AuthEndpoint;
 import com.codejam.codex.authzen.models.AuditLog;
 import com.codejam.codex.authzen.models.User;
 import com.codejam.codex.authzen.responses.AuthzenResponse;
-import com.codejam.codex.authzen.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,12 +31,32 @@ import java.util.List;
 public class AdminController {
 
     private final AdminEndpoint adminEndpoint;
-    private final AuthService authService;
+    private final AuthEndpoint authEndpoint;
 
     @Autowired
-    public AdminController(AdminEndpoint adminEndpoint, AuthService authService) {
+    public AdminController(AdminEndpoint adminEndpoint, AuthEndpoint authEndpoint) {
         this.adminEndpoint = adminEndpoint;
-        this.authService = authService;
+        this.authEndpoint = authEndpoint;
+    }
+    /**
+     * Helper method that checks if the current request is from an authenticated admin.
+     * If valid, returns the username wrapped in 200 OK; otherwise returns 401/403 with a message.
+     *
+     * @param request HttpServletRequest containing the token
+     * @return ResponseEntity with username in body if valid, or error message if unauthorized/forbidden
+     */
+    private ResponseEntity<String> verifyAdmin(HttpServletRequest request) {
+        String username = authEndpoint.getUsername(request);
+        if (username == null || !authEndpoint.isAuthenticated(request)) {
+            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
+        }
+
+        UserResponse userResponse = authEndpoint.getUserDetails(username);
+        if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
+            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
+        }
+
+        return ResponseEntity.ok(username);
     }
 
     /**
@@ -47,12 +68,11 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_ALL_USERS)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<AuthzenResponse<List<UserResponse>>> getAllUsers(HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body(null);
-        }
+    public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
 
+        String username = authCheck.getBody();
         List<UserResponse> users = adminEndpoint.getAllUsers(username);
         return ResponseEntity.ok(new AuthzenResponse<>(users));
     }
@@ -66,14 +86,12 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_USERS)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<User> getUserDetails(@PathVariable("id") Long userId, HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body(null);
-        }
+    public ResponseEntity<?> getUserDetails(@PathVariable("id") Long userId, HttpServletRequest request) {
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
 
-        User user = adminEndpoint.getUserById(userId);
-        return ResponseEntity.ok(user);
+        UserResponse user = adminEndpoint.getUserById(userId);
+        return ResponseEntity.ok(new AuthzenResponse<>(user));
     }
 
     /**
@@ -87,21 +105,15 @@ public class AdminController {
      */
     @PutMapping(ApiEndpoint.ADMIN_USER_ROLES)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<String> updateUserRole(@PathVariable("id") Long userId,
+    public ResponseEntity<AuthzenResponse<String>> updateUserRole(@PathVariable("id") Long userId,
                                                  @RequestBody RoleUpdateRequest roleUpdateRequest,
                                                  HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
-        }
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
 
-        UserResponse userResponse = authService.getUserDetails(username);
-        if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
-            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
-        }
-
+        String username = authCheck.getBody();
         String updated = adminEndpoint.updateUserRoles(userId, roleUpdateRequest, username);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(new AuthzenResponse<>(updated));
     }
 
     /**
@@ -113,20 +125,14 @@ public class AdminController {
      */
     @PostMapping(ApiEndpoint.ADMIN_ROLES)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<String> createRole(@RequestBody RoleRequest roleRequest,
+    public ResponseEntity<AuthzenResponse<String>> createRole(@RequestBody RoleRequest roleRequest,
                                              HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
-        }
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
 
-        UserResponse userResponse = authService.getUserDetails(username);
-        if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
-            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
-        }
-
+        String username = authCheck.getBody();
         String created = adminEndpoint.createRole(roleRequest, username);
-        return ResponseEntity.ok(created);
+        return ResponseEntity.ok(new AuthzenResponse<>(created));
     }
 
     /**
@@ -137,20 +143,15 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_AUDIT_LOGS)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<String> getAuditLogs(HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
-        }
+    public ResponseEntity<AuthzenResponse<?>> getAuditLogs(HttpServletRequest request) {
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
 
-        UserResponse userResponse = authService.getUserDetails(username);
-        if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
-            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
-        }
-
-        List<AuditLog> auditLogs = adminEndpoint.getAuditLogs(username);
-        return ResponseEntity.ok(auditLogs.toString());
+        String username = authCheck.getBody();
+        List<AuditLogResponse> auditLogs = adminEndpoint.getAuditLogs(username);
+        return ResponseEntity.ok(new AuthzenResponse<>(auditLogs));
     }
+
 
     /**
      * Delegates certain admin permissions to another user.
@@ -162,19 +163,15 @@ public class AdminController {
      */
     @PostMapping(ApiEndpoint.ADMIN_DELEGATE)
     @Secured("ROLE_ADMIN")
-    public ResponseEntity<String> delegatePermissions(@RequestBody DelegateRequest delegateRequest,
+    public ResponseEntity<AuthzenResponse<String>> delegatePermissions(@RequestBody DelegateRequest delegateRequest,
                                                       HttpServletRequest request) {
-        String username = authService.getUsername(request);
-        if (username == null || !authService.isAuthenticated(request)) {
-            return ResponseEntity.status(401).body("Unauthorized: No token provided.");
-        }
+        ResponseEntity<String> authCheck = verifyAdmin(request);
+        if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
 
-        UserResponse userResponse = authService.getUserDetails(username);
-        if (userResponse == null || !userResponse.getRoles().contains("ROLE_ADMIN")) {
-            return ResponseEntity.status(403).body("Forbidden: Insufficient permissions.");
-        }
-
+        String username = authCheck.getBody();
         String delegated = adminEndpoint.delegatePermissions(delegateRequest, username);
-        return ResponseEntity.ok(delegated);
+        return ResponseEntity.ok(new AuthzenResponse<>(delegated));
     }
+
+
 }

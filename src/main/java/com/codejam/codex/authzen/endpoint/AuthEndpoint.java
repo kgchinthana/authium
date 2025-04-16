@@ -2,6 +2,7 @@ package com.codejam.codex.authzen.endpoint;
 
 import com.codejam.codex.authzen.dtos.inputs.*;
 import com.codejam.codex.authzen.dtos.outputs.TokenResponse;
+import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,5 +100,20 @@ public class AuthEndpoint {
      */
     public boolean resetUserPassword(ResetPasswordRequest request) {
         return authService.resetUserPassword(request);
+    }
+
+
+    /**
+     * Blacklists the token associated with the incoming request.
+     *
+     * @param request HttpServletRequest containing the token to be blacklisted.
+     * @return true if the token was successfully added to the blacklist; false otherwise.
+     */
+    public boolean blacklistToken(HttpServletRequest request) {
+        return authService.blacklistToken(request);
+    }
+
+    public UserResponse getUserDetails(String username) {
+        return authService.getUserDetails(username);
     }
 }

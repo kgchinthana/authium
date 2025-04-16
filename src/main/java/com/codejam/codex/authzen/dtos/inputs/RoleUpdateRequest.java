@@ -13,6 +13,5 @@ public class RoleUpdateRequest {
 
     private String roleName;
 
-    private String roleDescription;
 
 }

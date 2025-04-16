@@ -3,6 +3,7 @@ package com.codejam.codex.authzen.services;
 import com.codejam.codex.authzen.dtos.inputs.DelegateRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleRequest;
 import com.codejam.codex.authzen.dtos.inputs.RoleUpdateRequest;
+import com.codejam.codex.authzen.dtos.outputs.AuditLogResponse;
 import com.codejam.codex.authzen.dtos.outputs.UserResponse;
 import com.codejam.codex.authzen.models.AuditLog;
 import com.codejam.codex.authzen.models.Role;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class AdminService {
     private final AuditLogRepository auditLogRepository;
 
     public List<UserResponse> getAllUsers(String adminUsername) {
-        logAction(adminUsername, "Fetched all users");
+        logAction(adminUsername, "User list got successfully");
         return userRepository.findAll()
                 .stream()
                 .map(UserResponse::fromEntity)
@@ -53,16 +56,25 @@ public class AdminService {
         }
 
         userRepository.save(user);
-
-        logAction(adminUsername, "Updated roles for user ID " + userId);
+        logAction(adminUsername, "User roles updated successfully");
         return "User roles updated successfully";
     }
 
 
-    public List<AuditLog> getAuditLogs(String adminUsername) {
-        logAction(adminUsername, "Viewed audit logs");
-        return auditLogRepository.findAll();
+    public List<AuditLogResponse> getAuditLogs(String adminUsername) {
+        List<AuditLog> auditLogs = auditLogRepository.findAll();
+
+        return auditLogs.stream()
+                .map(log -> AuditLogResponse.builder()
+                        .id(log.getId())
+                        .username(log.getUser().getUsername())
+                        .actionType(log.getActionType())
+                        .ipAddress(log.getIpAddress())
+                        .timestamp(log.getTimestamp())
+                        .build())
+                .toList();
     }
+
 
     public String createRole(RoleRequest request, String adminUsername) {
         String roleName = request.getRoleName();
@@ -73,10 +85,11 @@ public class AdminService {
 
         Role role = new Role();
         role.setName(roleName);
-        role.setDescription(request.getDescription()); // If your RoleRequest has description
+        role.setDescription(request.getDescription());
         roleRepository.save(role);
 
-        logAction(adminUsername, "Created new role: " + roleName);
+        logAction(adminUsername, "Role created successfully");
+
         return "Role created successfully";
     }
 
@@ -103,10 +116,10 @@ public class AdminService {
         userRole.setUser(user);
         userRole.setRole(role);
 
-        user.getUserRoles().add(userRole); // Add UserRole association
+        user.getUserRoles().add(userRole);
         userRepository.save(user);
+        logAction(adminUsername, "Permissions delegated successfully");
 
-        logAction(adminUsername, "Delegated role " + request.getRole() + " to user ID " + request.getUserId());
         return "Permissions delegated successfully";
     }
 
@@ -124,9 +137,13 @@ public class AdminService {
     }
 
 
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        return UserResponse.fromEntity(user);
     }
+
+
 
 }
