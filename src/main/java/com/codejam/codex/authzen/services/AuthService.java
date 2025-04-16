@@ -34,7 +34,7 @@ public class AuthService {
     private final OAuthService oAuthService;
     private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private Set<String> blacklistedTokens = new HashSet<>();
+    private final Set<String> blacklistedTokens = new HashSet<>();
 
     @Autowired
     public AuthService(JwtService jwtService, UserService userService, UserRepository userRepository,
@@ -43,7 +43,7 @@ public class AuthService {
         this.userService = userService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.emailUtil = emailUtil; // Injected
+        this.emailUtil = emailUtil;
         this.emailTokenRepository = emailTokenRepository;
         this.oauthProviderRepository = oauthProviderRepository;
         this.oAuthService = oAuthService;
@@ -60,14 +60,14 @@ public class AuthService {
     public boolean registerUser(RegisterRequest request) {
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         if (existingUser.isPresent()) {
-            return false; // User already exists
+            return false;
         }
 
         List<Role> roles = roleRepository.findByName("ROLE_USER");
         if (roles.isEmpty()) {
             throw new RuntimeException("Default role not found: ROLE_USER");
         }
-        Role userRole = roles.get(0); // Assuming name is unique
+        Role userRole = roles.get(0);
 
 
         // Create the user
@@ -236,7 +236,7 @@ public class AuthService {
      */
     public boolean isAuthenticated(HttpServletRequest request) {
         final String token = extractTokenFromHeader(request);
-        if (token == null || !jwtService.isTokenValid(token)) {
+        if ((token == null || !jwtService.isTokenValid(token)) && isBlacklisted(token) ) {
             return false;
         }
 
@@ -254,7 +254,7 @@ public class AuthService {
     private String extractTokenFromHeader(HttpServletRequest request) {
         final String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7); // remove "Bearer "
+            return authHeader.substring(7);
         }
         return null;
     }
@@ -299,7 +299,7 @@ public class AuthService {
                 .user(user)
                 .token(token)
                 .revoked(false)
-                .expiresAt(Timestamp.from(Instant.now().plus(7, ChronoUnit.DAYS))) // customize expiry
+                .expiresAt(Timestamp.from(Instant.now().plus(7, ChronoUnit.DAYS)))
                 .build();
 
         refreshTokenRepository.save(refreshToken);

@@ -1,19 +1,5 @@
 package com.codejam.codex.authzen.security;
 
-// Keep existing imports like HttpSecurity, annotations, etc.
-// Remove RSA/JWK related imports if no longer needed:
-// import com.nimbusds.jose.jwk.JWKSet;
-// import com.nimbusds.jose.jwk.source.JWKSource;
-// import com.nimbusds.jose.proc.SecurityContext;
-// import com.nimbusds.jose.jwk.RSAKey;
-// import java.security.KeyPair;
-// import java.security.KeyPairGenerator;
-// import java.security.NoSuchAlgorithmException;
-// import java.security.interfaces.RSAPublicKey;
-// import java.util.UUID;
-// import org.springframework.security.oauth2.jwt.JwtEncoder;
-// import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +28,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-
+/**
+ * Main Security Configuration class that:
+ * - Configures JWT-based OAuth2 authentication using HS256
+ * - Sets global CORS and CSRF policies
+ * - Applies secure HTTP headers
+ * - Secures endpoints with role-based access
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -57,80 +49,104 @@ public class SecurityConfiguration {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    /**
+     * Custom JWT Authentication Converter to extract roles from token claims.
+     * Roles must be defined in the "roles" claim without any prefix.
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthoritiesClaimName("roles");
+        authoritiesConverter.setAuthorityPrefix("");
+
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("");
-        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return converter;
     }
 
+    /**
+     * Main Security Filter Chain configuration.
+     * - Enables stateless session
+     * - Disables CSRF (suitable for REST APIs)
+     * - Applies JWT-based OAuth2 security
+     * - Configures public and protected routes
+     * - Adds secure headers and CORS support
+     */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
                 .addFilterBefore(corsFilter(), CorsFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/authenticate/auth/register", "/api/authenticate/auth/login", "/api/authenticate/auth/oauth",
-                                "/api/authenticate/auth/reset-request", "/api/authenticate/auth/reset-password",
+                                "/api/authenticate/auth/register",
+                                "/api/authenticate/auth/login",
+                                "/api/authenticate/auth/oauth",
+                                "/api/authenticate/auth/reset-request",
+                                "/api/authenticate/auth/reset-password",
                                 "/api/authenticate/user/refresh",
                                 "/reset-password/**",
-                                "/swagger-ui.html", "/swagger-ui/**",
-                                "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Use custom JWT converter
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())
                                 .decoder(jwtDecoder())
                         )
                 )
                 .headers(headers -> {
-                    headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"));
-                    headers.defaultsDisabled().addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"));
-                    headers.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000));
-                    headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
+                    headers
+                            .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                            .defaultsDisabled()
+                            .addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"))
+                            .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
                 });
 
-        return httpSecurity.build();
+        return http.build();
     }
 
+    /**
+     * Configures a basic CORS filter allowing all origins, headers, and common methods.
+     * NOTE: Adjust allowed origins for production environments.
+     */
     @Bean
     public CorsFilter corsFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*")); // Customize as needed for production
+        config.setAllowedOrigins(List.of("*")); // Consider restricting in production
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 
+    /**
+     * BCrypt password encoder bean for secure password hashing.
+     */
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // --- REMOVED RSA BEANS ---
-    // @Bean KeyPair keyPair()
-    // @Bean RSAKey rsaKey(KeyPair keyPair)
-    // @Bean JWKSource<SecurityContext> jwkSource(RSAKey rsaKey)
-    // @Bean JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource)
-
     /**
-     * Configures a JWT decoder using the HS256 symmetric secret key.
-     * @return Configured JwtDecoder for HS256.
+     * Configures JWT decoder for HS256 symmetric key.
+     * Ensures key length is compliant with HS256 requirement (>= 256 bits).
      */
     @Bean
     public JwtDecoder jwtDecoder() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
-            throw new IllegalStateException("JWT secret key must be at least 32 bytes (256 bits) long for HS256. Check your 'jwt.secret' property.");
+            throw new IllegalStateException("JWT secret key must be at least 32 bytes (256 bits) long for HS256. " +
+                    "Check your 'jwt.secret' property.");
         }
         SecretKey key = new SecretKeySpec(keyBytes, "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(key).build();
