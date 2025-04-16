@@ -31,9 +31,13 @@ public class AdminService {
 
     public List<UserResponse> getAllUsers(String adminUsername) {
         logAction(adminUsername, "User list got successfully");
+
         return userRepository.findAll()
                 .stream()
-                .map(UserResponse::fromEntity)
+                .map(user -> {
+                    List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
+                    return UserResponse.fromEntity(user, permissionNames);
+                })
                 .toList();
     }
 
@@ -140,8 +144,8 @@ public class AdminService {
     public UserResponse getUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
-
-        return UserResponse.fromEntity(user);
+        List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
+        return UserResponse.fromEntity(user, permissionNames);
     }
 
 

@@ -23,7 +23,7 @@ public class JwtService {
     @Value("${jwt.refresh-token.expiry-ms}")
     private long refreshTokenExpiry;
 
-    private Set<String> blacklistedTokens = new HashSet<>();
+    private final Set<String> blacklistedTokens = new HashSet<>();
 
     @PostConstruct
     public void validateSecretLength() {
@@ -68,6 +68,7 @@ public class JwtService {
         claims.put("userId", userResponse.getId());
         claims.put("username", userResponse.getUsername());
         claims.put("roles", userResponse.getRoles());
+        claims.put("permissions", userResponse.getPermissions());
         return buildToken(claims, userResponse.getUsername(), accessTokenExpiry);
     }
 
@@ -95,6 +96,11 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public List<String> extractPermissions(String token) {
+        Claims claims = extractAllClaims(token);
+        return (List<String>) claims.get("permissions");
     }
 
     public boolean isTokenBlacklisted(String token) {

@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -25,6 +27,7 @@ import org.springframework.web.filter.CorsFilter;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,17 +55,32 @@ public class SecurityConfiguration {
     /**
      * Custom JWT Authentication Converter to extract roles from token claims.
      * Roles must be defined in the "roles" claim without any prefix.
+     *
      */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        authoritiesConverter.setAuthoritiesClaimName("roles");
-        authoritiesConverter.setAuthorityPrefix("");
-
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            List<String> roles = jwt.getClaimAsStringList("roles");
+            List<String> permissions = jwt.getClaimAsStringList("permissions");
+
+            List<GrantedAuthority> authorities = new ArrayList<>();
+
+            if (roles != null) {
+                roles.forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+            }
+
+            if (permissions != null) {
+                permissions.forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission)));
+            }
+
+            return authorities;
+        });
+
         return converter;
     }
+
 
     /**
      * Main Security Filter Chain configuration.

@@ -68,6 +68,7 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_ALL_USERS)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('VIEW_USER')")
     public ResponseEntity<?> getAllUsers(HttpServletRequest request) {
         ResponseEntity<String> authCheck = verifyAdmin(request);
         if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
@@ -86,6 +87,7 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_USERS)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('VIEW_USER')")
     public ResponseEntity<?> getUserDetails(@PathVariable("id") Long userId, HttpServletRequest request) {
         ResponseEntity<String> authCheck = verifyAdmin(request);
         if (!authCheck.getStatusCode().is2xxSuccessful()) return authCheck;
@@ -105,6 +107,7 @@ public class AdminController {
      */
     @PutMapping(ApiEndpoint.ADMIN_USER_ROLES)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('UPDATE_USER')")
     public ResponseEntity<AuthzenResponse<String>> updateUserRole(@PathVariable("id") Long userId,
                                                  @RequestBody RoleUpdateRequest roleUpdateRequest,
                                                  HttpServletRequest request) {
@@ -125,6 +128,7 @@ public class AdminController {
      */
     @PostMapping(ApiEndpoint.ADMIN_ROLES)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('CREATE_USER')")
     public ResponseEntity<AuthzenResponse<String>> createRole(@RequestBody RoleRequest roleRequest,
                                              HttpServletRequest request) {
         ResponseEntity<String> authCheck = verifyAdmin(request);
@@ -143,6 +147,7 @@ public class AdminController {
      */
     @GetMapping(ApiEndpoint.ADMIN_AUDIT_LOGS)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('VIEW_USER')")
     public ResponseEntity<AuthzenResponse<?>> getAuditLogs(HttpServletRequest request) {
         ResponseEntity<String> authCheck = verifyAdmin(request);
         if (!authCheck.getStatusCode().is2xxSuccessful()) return  ResponseEntity.ok(new AuthzenResponse<>(authCheck.getBody()));
@@ -163,6 +168,7 @@ public class AdminController {
      */
     @PostMapping(ApiEndpoint.ADMIN_DELEGATE)
     @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasAuthority('UPDATE_USER')")
     public ResponseEntity<AuthzenResponse<String>> delegatePermissions(@RequestBody DelegateRequest delegateRequest,
                                                       HttpServletRequest request) {
         ResponseEntity<String> authCheck = verifyAdmin(request);

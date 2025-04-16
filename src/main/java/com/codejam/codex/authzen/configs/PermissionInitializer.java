@@ -87,6 +87,7 @@ public class PermissionInitializer {
                 Permission.builder().name("CREATE_USER").description("Create new user").build(),
                 Permission.builder().name("UPDATE_USER").description("Update user information").build(),
                 Permission.builder().name("DELETE_USER").description("Delete a user").build(),
+                Permission.builder().name("USER_LOGOUT").description("Logout user").build(),
                 Permission.builder().name("ACTIVATE_USER").description("Activate user account").build(),
                 Permission.builder().name("DEACTIVATE_USER").description("Deactivate user account").build(),
                 Permission.builder().name("VIEW_USER").description("View user details").build(),
@@ -120,7 +121,8 @@ public class PermissionInitializer {
                 Permission.builder().name("UPDATE_USER").description("Update user information").build(),
                 Permission.builder().name("VIEW_DASHBOARD").description("Access dashboard").build(),
                 Permission.builder().name("VIEW_STATS").description("View system statistics").build(),
-                Permission.builder().name("VIEW_CONTENT").description("View content").build()
-        );
+                Permission.builder().name("VIEW_CONTENT").description("View content").build(),
+                Permission.builder().name("USER_LOGOUT").description("Logout user").build()
+                );
     }
 }

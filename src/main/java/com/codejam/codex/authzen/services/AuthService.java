@@ -102,6 +102,8 @@ public class AuthService {
             User user = userOptional.get();
             if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
+                List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
+                userResponse.setPermissions(permissionNames);
                 String accessToken = jwtService.generateAccessToken(userResponse);
                 String refreshToken = jwtService.generateRefreshToken(userResponse);
                 saveRefreshToken(user, refreshToken);
@@ -329,7 +331,9 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        UserResponse userDetails = UserResponse.fromEntity(user);
+        List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
+
+        UserResponse userDetails = UserResponse.fromEntity(user, permissionNames);
 
         String newAccessToken = jwtService.generateAccessToken(userDetails);
         String newRefreshToken = jwtService.generateRefreshToken(userDetails);

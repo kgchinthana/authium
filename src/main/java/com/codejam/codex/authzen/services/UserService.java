@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,8 +43,9 @@ public class UserService {
     public UserResponse getProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
 
-        return UserResponse.fromEntity(user);
+        return UserResponse.fromEntity(user, permissionNames);
     }
 
     @Transactional

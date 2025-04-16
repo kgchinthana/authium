@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,9 @@ public class UserController {
      * @param request HttpServletRequest with access token
      * @return User profile in standardized response format
      */
+    @PreAuthorize("hasAuthority('VIEW_USER')")
     @GetMapping(ApiEndpoint.AUTH_ME)
+    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<UserResponse>> getProfile(HttpServletRequest request) {
         if (!authEndpoint.isAuthenticated(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -63,7 +66,9 @@ public class UserController {
      * @param updateRequest Updated user information
      * @return Success message
      */
+    @PreAuthorize("hasAuthority('UPDATE_USER')")
     @PutMapping(ApiEndpoint.AUTH_UPDATE)
+    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<?>> updateProfile(
             HttpServletRequest request,
             @RequestBody UpdateUserRequest updateRequest
@@ -85,7 +90,9 @@ public class UserController {
      * @param request HttpServletRequest with access token
      * @return Success message
      */
+    @PreAuthorize("hasAuthority('USER_LOGOUT')")
     @PostMapping(ApiEndpoint.AUTH_LOGOUT)
+    @Secured("ROLE_USER")
     public ResponseEntity<AuthzenResponse<?>> logout(HttpServletRequest request) {
         if (!authEndpoint.isAuthenticated(request)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
