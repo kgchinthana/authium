@@ -1,6 +1,6 @@
 /* General styles */
 * {
-    margin: 0;
+    margin-top:10px;
     padding: 0;
     box-sizing: border-box;
 }
@@ -42,7 +42,8 @@ body {
 
 /* Input Group */
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
+    margin-top:10px;
     text-align: left;
     width: 100%;
 }
@@ -95,3 +96,4 @@ body {
 .success-message {
     color: green;
 }
+

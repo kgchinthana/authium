@@ -2,23 +2,31 @@
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 
-// Check if token is present in URL
-if (!token) {
-    document.getElementById('error-message').textContent = 'Invalid or missing token.';
-    document.getElementById('error-message').style.display = 'block';
-}
-
+// Select DOM elements
 const form = document.getElementById('resetForm');
+const emailInput = document.getElementById('email');
 const newPasswordInput = document.getElementById('newPassword');
 const confirmPasswordInput = document.getElementById('confirmPassword');
 const errorMessage = document.getElementById('error-message');
 const successMessage = document.getElementById('success-message');
 
+// Check if token is present in URL
+if (!token) {
+    errorMessage.textContent = 'Invalid or missing token.';
+    errorMessage.style.display = 'block';
+}
+
 // Handle form submission
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Check if passwords match
+    // Basic validations
+    if (!emailInput.value.trim()) {
+        errorMessage.textContent = 'Email is required.';
+        errorMessage.style.display = 'block';
+        return;
+    }
+
     if (newPasswordInput.value !== confirmPasswordInput.value) {
         errorMessage.textContent = 'Passwords do not match.';
         errorMessage.style.display = 'block';
@@ -28,13 +36,13 @@ form.addEventListener('submit', async (e) => {
     // Prepare the request payload
     const resetRequest = {
         token: token,
-        email: 'user@example.com', // Replace with dynamic email if needed
+        email: emailInput.value,
         newPassword: newPasswordInput.value
     };
 
     try {
         // Make the password reset request
-        const response = await fetch('/api/authenticate/auth/reset-password', {
+        const response = await fetch('http://localhost:8080/api/authenticate/auth/reset-password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -54,6 +62,7 @@ form.addEventListener('submit', async (e) => {
             successMessage.style.display = 'none';
         }
     } catch (error) {
+        console.log(error);
         errorMessage.textContent = 'Failed to reset password. Please try again later.';
         errorMessage.style.display = 'block';
         successMessage.style.display = 'none';
