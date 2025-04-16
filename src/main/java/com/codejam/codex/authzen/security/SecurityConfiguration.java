@@ -104,6 +104,7 @@ public class SecurityConfiguration {
                                 "/api/authenticate/auth/reset-password",
                                 "/api/authenticate/user/refresh",
                                 "/reset-password/**",
+                                "/api/authenticate/health",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

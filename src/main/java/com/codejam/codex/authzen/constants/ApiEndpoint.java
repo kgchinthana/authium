@@ -8,6 +8,8 @@ public class ApiEndpoint {
     public static final String AUTH = AUTHENTICATE_PATH + "/auth";
     public static final String USER = AUTHENTICATE_PATH + "/user";
 
+    // health endpoint
+    public static final String HEALTH = AUTHENTICATE_PATH + "/health";
     // Public endpoints
     public static final String AUTH_REGISTER = "/register";
     public static final String AUTH_LOGIN = "/login";

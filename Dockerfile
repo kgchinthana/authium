@@ -8,6 +8,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 COPY src ./src
+COPY .env.docker .env.docker
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jdk
@@ -16,6 +17,6 @@ WORKDIR /app
 # Copy the built jar from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8090
 
 CMD ["java", "-jar", "app.jar"]
