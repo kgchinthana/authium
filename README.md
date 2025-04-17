@@ -43,6 +43,7 @@ A secure, extensible authentication and authorization backend for modern applica
 | POST   | `/auth/oauth`         | GitHub OAuth login                   |
 | POST   | `/auth/reset-request` | Request password reset token         |
 | POST   | `/auth/reset-password`| Reset password using token           |
+| POST   | `/auth/refresh`       | Revoke refresh token                 |
 
 ### 🔐 Secured (Authenticated User)
 
@@ -51,7 +52,6 @@ A secure, extensible authentication and authorization backend for modern applica
 | GET    | `/auth/me`      | Get logged-in user profile |
 | PUT    | `/auth/update`  | Update profile             |
 | POST   | `/auth/logout`  | Logout                     |
-| POST   | `/auth/refresh` | Revoke refresh token       |
 
 ### 🛠️ Admin Only
 
