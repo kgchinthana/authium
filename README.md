@@ -113,18 +113,36 @@ Authzen/
 
 ### 1. Clone the Repo
 ```bash
-git clone https://github.com/your-org/authzen.git
+git clone https://github.com/kgchinthana/authzen.git
 cd authzen
 ```
 
-### 2. Configure Database
-Create a MySQL DB and update `application.yml`:
+### 2. Setup Environment Variables
+Create `.env` file in root directory:
 ```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/authzen
-    username: root
-    password: password
+  SPRING_APPLICATION_NAME=authzen
+  SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/authzen?createDatabaseIfNotExist=true
+  SPRING_DATASOURCE_USERNAME=root
+  SPRING_DATASOURCE_PASSWORD=yourpassword
+  SERVER_PORT=8080
+  
+  JWT_SECRET=your_secret_key
+  JWT_ACCESS_TOKEN_EXPIRY_MS=900000
+  JWT_REFRESH_TOKEN_EXPIRY_MS=604800000
+  
+  MAIL_HOST=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USERNAME=youremail@gmail.com
+  MAIL_PASSWORD=yourapppassword
+  EMAIL_FROM=noreply@yourdomain.com
+  
+  GITHUB_CLIENT_ID=your_client_id
+  GITHUB_CLIENT_SECRET=your_client_secret
+  GITHUB_REDIRECT_URI=http://localhost:8080/oauth/callback
+  
+  ADMIN_EMAIL=admin@yourdomain.com
+  ADMIN_USERNAME=admin
+  ADMIN_PASSWORD=Admin@123
 ```
 
 ### 3. GitHub OAuth Setup
@@ -132,12 +150,11 @@ Register a GitHub OAuth App:
 - Homepage: `http://localhost:8080`
 - Callback: `http://localhost:8080/auth/oauth`
 
-Set in `application.yml`:
+Set in `.env`:
 ```yaml
-oauth:
-  github:
-    client-id: your-client-id
-    client-secret: your-client-secret
+  GITHUB_CLIENT_ID=your_client_id
+  GITHUB_CLIENT_SECRET=your_client_secret
+  GITHUB_REDIRECT_URI=http://localhost:8080/oauth/callback
 ```
 
 ### 4. Run the Application
@@ -172,13 +189,28 @@ Content-Type: application/json
 
 ## 📄 Environment Variables
 
-| Key                        | Description                  |
-|---------------------------|------------------------------|
-| `GITHUB_CLIENT_ID`        | GitHub OAuth client ID       |
-| `GITHUB_CLIENT_SECRET`    | GitHub OAuth client secret   |
-| `JWT_SECRET`              | JWT signing key              |
-| `JWT_EXPIRATION`          | Access token duration        |
-| `REFRESH_TOKEN_EXPIRATION`| Refresh token duration       |
+| Key                              | Description                          |
+|----------------------------------|--------------------------------------|
+| `SPRING_APPLICATION_NAME`        | Spring Boot application name         |
+| `SPRING_DATASOURCE_URL`          | JDBC URL for MySQL database          |
+| `SPRING_DATASOURCE_USERNAME`     | MySQL database username              |
+| `SPRING_DATASOURCE_PASSWORD`     | MySQL database password              |
+| `SERVER_PORT`                    | Application server port              |
+| `JWT_SECRET`                     | JWT signing key                      |
+| `JWT_ACCESS_TOKEN_EXPIRY_MS`     | Access token expiration in ms        |
+| `JWT_REFRESH_TOKEN_EXPIRY_MS`    | Refresh token expiration in ms       |
+| `MAIL_HOST`                      | SMTP server host                     |
+| `MAIL_PORT`                      | SMTP server port                     |
+| `MAIL_USERNAME`                  | Email service username               |
+| `MAIL_PASSWORD`                  | Email service password               |
+| `EMAIL_FROM`                     | Sender email address                 |
+| `GITHUB_CLIENT_ID`               | GitHub OAuth client ID               |
+| `GITHUB_CLIENT_SECRET`           | GitHub OAuth client secret           |
+| `GITHUB_REDIRECT_URI`            | GitHub OAuth redirect URI            |
+| `ADMIN_EMAIL`                    | Default admin email                  |
+| `ADMIN_USERNAME`                 | Default admin username               |
+| `ADMIN_PASSWORD`                 | Default admin password               |
+
 
 ---
 
@@ -212,7 +244,7 @@ Content-Type: application/json
 2. Fix a bug or implement a feature  
 3. Submit a pull request  
 
-For the open-source competition, check the [`issues`](https://github.com/your-org/authzen/issues) tab for bugs to solve!
+For the open-source competition, check the [`issues`](https://github.com/kgchinthana/authzen/issues) tab for bugs to solve!
 
 ---
 
