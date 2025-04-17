@@ -1,11 +1,11 @@
 services:
   mysql:
     image: mysql:8
-    container_name: authzen-db
+    container_name: authium-db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: authzen
+      MYSQL_DATABASE: authium
       MYSQL_USER: user
       MYSQL_PASSWORD: password
     ports:
@@ -19,10 +19,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: authzen-backend
+    container_name: authium-backend
     restart: always
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authzen?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/authium?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
     ports:

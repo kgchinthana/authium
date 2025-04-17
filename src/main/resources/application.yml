@@ -12,8 +12,8 @@ spring:
     database-platform: org.hibernate.dialect.MySQL8Dialect
   security:
     user:
-      name: admin
-      password: secret123
+      name: ${ADMIN_USERNAME}
+      password: ${ADMIN_PASSWORD}
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}

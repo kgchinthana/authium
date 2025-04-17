@@ -1,4 +1,4 @@
-# AuthZen 🔐
+# Authium🔐
 
 A robust and extensible authentication and authorization backend built with Spring Boot. Perfect for real-world applications, AuthZen supports **JWT**, **OAuth2**, **role-based access**, **admin delegation**, and **full token lifecycle control**.
 
@@ -69,14 +69,14 @@ A robust and extensible authentication and authorization backend built with Spri
 ## 🎓 Project Structure
 
 ```
-Authzen/
+Authium/
 ├── src/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/
 │   │   │       └── yourorg/
-│   │   │           └── authzen/
-│   │   │               ├── AuthzenApplication.java
+│   │   │           └── authium/
+│   │   │               ├── AuthiumApplication.java
 │   │   │               ├── configs/
 │   │   │               ├── constants/
 │   │   │               ├── controllers/
@@ -116,14 +116,14 @@ Authzen/
 
 ### 1. Clone the Repo
 ```bash
-git clone https://github.com/kgchinthana/authzen.git
-cd authzen
+git clone https://github.com/kgchinthana/authium.git
+cd authium
 ```
 
 ### 2. Setup Environment Variables
 Create `.env` file in root directory:
 ```yaml
-  SPRING_APPLICATION_NAME=authzen
+  SPRING_APPLICATION_NAME=authium
   SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/authzen?createDatabaseIfNotExist=true
   SPRING_DATASOURCE_USERNAME=root
   SPRING_DATASOURCE_PASSWORD=yourpassword
@@ -253,4 +253,4 @@ For the open-source competition, check the [`issues`](https://github.com/kgchint
 
 ## 📃 License
 
-Released under the [MIT License](LICENSE.md) © 2025 — AuthZen Team
+Released under the [MIT License](LICENSE.md) © 2025 — Authium Team
