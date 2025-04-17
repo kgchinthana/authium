@@ -1,10 +1,10 @@
 # AuthZen 🔐
 
-A secure, extensible authentication and authorization backend for modern applications built with **Spring Boot**. Designed for scalability and real-world integration, this project includes **JWT**, **OAuth2**, **role-based access**, **admin controls**, and **token lifecycle management**.
+A robust and extensible authentication and authorization backend built with Spring Boot. Perfect for real-world applications, AuthZen supports **JWT**, **OAuth2**, **role-based access**, **admin delegation**, and **full token lifecycle control**.
 
 ---
 
-## ✨ Features
+## 🌟 Key Features
 
 - **User Registration & Login** (JWT-based)  
 - **Refresh Token** handling (per user, revocable)  
@@ -17,7 +17,7 @@ A secure, extensible authentication and authorization backend for modern applica
 
 ---
 
-## 📆 Technologies
+## 🛠️ Tech Stack
 
 - Java 21  
 - Spring Boot 3  
@@ -77,18 +77,18 @@ Authzen/
 │   │   │       └── yourorg/
 │   │   │           └── authzen/
 │   │   │               ├── AuthzenApplication.java
-│   │   │               ├── config/
+│   │   │               ├── configs/
 │   │   │               ├── constants/
-│   │   │               ├── controller/
-│   │   │               ├── dto/
-│   │   │               ├── endpoint/
-│   │   │               ├── exception/
-│   │   │               ├── model/
-│   │   │               ├── repository/
-│   │   │               ├── response/
+│   │   │               ├── controllers/
+│   │   │               ├── dtos/
+│   │   │               ├── endpoints/
+│   │   │               ├── exceptions/
+│   │   │               ├── models/
+│   │   │               ├── repositories/
+│   │   │               ├── responses/
 │   │   │               ├── security/
-│   │   │               ├── service/
-│   │   │               └── util/
+│   │   │               ├── services/
+│   │   │               └── utils/
 │   │   └── resources/
 │   │       ├── application.yml
 │   │       ├── static/
@@ -97,7 +97,10 @@ Authzen/
 │   │       │   └── reset-password/
 │   │       └── templates/
 ├── .env
+├── .env.docker
+├── .env.example
 ├── .gitignore
+├── docker-compose.yml
 ├── Dockerfile
 ├── HELP.md
 ├── LICENSE.md
@@ -250,4 +253,4 @@ For the open-source competition, check the [`issues`](https://github.com/kgchint
 
 ## 📃 License
 
-[MIT](LICENSE.md) © 2025 — AuthZen Team
+Released under the [MIT License](LICENSE.md) © 2025 — AuthZen Team
