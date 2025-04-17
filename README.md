@@ -6,29 +6,29 @@ A secure, extensible authentication and authorization backend for modern applica
 
 ## ✨ Features
 
-- **User Registration & Login** (JWT-based)
-- **Refresh Token** handling (per user, revocable)
-- **GitHub OAuth2** login support
-- **Role-based Access Control** (User/Admin)
-- **Audit Logging** (for all sensitive actions)
-- **Admin Delegation** (promote/demote users)
-- **Token Revocation** on logout
-- **Account Lock/Unlock Management**
+- **User Registration & Login** (JWT-based)  
+- **Refresh Token** handling (per user, revocable)  
+- **GitHub OAuth2** login support  
+- **Role-based Access Control** (User/Admin)  
+- **Audit Logging** (for all sensitive actions)  
+- **Admin Delegation** (promote/demote users)  
+- **Token Revocation** on logout  
+- **Account Lock/Unlock Management**  
 
 ---
 
 ## 📆 Technologies
 
-- Java 21
-- Spring Boot 3
-- Spring Security
-- JWT (Access & Refresh)
-- OAuth2 (GitHub)
-- MySQL
-- Hibernate (JPA)
-- Lombok
-- MapStruct (optional)
-- Docker (optional for deployment)
+- Java 21  
+- Spring Boot 3  
+- Spring Security  
+- JWT (Access & Refresh)  
+- OAuth2 (GitHub)  
+- MySQL  
+- Hibernate (JPA)  
+- Lombok  
+- MapStruct (optional)  
+- Docker (optional for deployment)  
 
 ---
 
@@ -55,14 +55,14 @@ A secure, extensible authentication and authorization backend for modern applica
 
 ### 🛠️ Admin Only
 
-| Method | Endpoint               | Description                         |
-|--------|------------------------|-------------------------------------|
-| GET    | `/admin/users`         | View all users                      |
-| PUT    | `/admin/users/{id}/roles` | Update user roles to relevent user  |
-| GET    | `/admin/audit-logs`    | View audit logs                     |
-| GET    | `/admin/roles`         | List all available roles            |
-| POST   | `/admin/delegate`      | Delegate admin role to another user |
-| POST   | `/admin/users/roles`  | Update user roles                   |
+| Method | Endpoint                 | Description                         |
+|--------|--------------------------|-------------------------------------|
+| GET    | `/admin/users`           | View all users                      |
+| PUT    | `/admin/users/{id}/roles` | Update user roles                  |
+| GET    | `/admin/audit-logs`      | View audit logs                     |
+| GET    | `/admin/roles`           | List all available roles            |
+| POST   | `/admin/delegate`        | Delegate admin role to another user |
+| POST   | `/admin/users/roles`     | Update user roles                   |
 
 ---
 
@@ -74,29 +74,28 @@ Authzen/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/
-│   │   │       └── codejam/
-│   │   │           └── codex/
-│   │   │               └── authzen/
-│   │   │                   ├── AuthzenApplication.java
-│   │   │                   ├── config/               # Spring configuration beans
-│   │   │                   ├── constants/            # Static final values (messages, keys, etc.)
-│   │   │                   ├── controller/           # REST controllers (expose API endpoints)
-│   │   │                   ├── dto/                  # Request/Response DTOs
-│   │   │                   ├── endpoint/             # Enum or constants for endpoint URLs
-│   │   │                   ├── exception/            # Custom exceptions and handlers
-│   │   │                   ├── model/                # JPA entities
-│   │   │                   ├── repository/           # Spring Data JPA interfaces
-│   │   │                   ├── response/             # Custom response wrappers (if any)
-│   │   │                   ├── security/             # JWT, filter chains, config, etc.
-│   │   │                   ├── service/              # Business logic layer
-│   │   │                   └── util/                 # Utility/helper classes
+│   │   │       └── yourorg/
+│   │   │           └── authzen/
+│   │   │               ├── AuthzenApplication.java
+│   │   │               ├── config/
+│   │   │               ├── constants/
+│   │   │               ├── controller/
+│   │   │               ├── dto/
+│   │   │               ├── endpoint/
+│   │   │               ├── exception/
+│   │   │               ├── model/
+│   │   │               ├── repository/
+│   │   │               ├── response/
+│   │   │               ├── security/
+│   │   │               ├── service/
+│   │   │               └── util/
 │   │   └── resources/
 │   │       ├── application.yml
 │   │       ├── static/
 │   │       │   ├── css/
 │   │       │   ├── js/
 │   │       │   └── reset-password/
-│   │       └── templates/                           # Thymeleaf or HTML files
+│   │       └── templates/
 ├── .env
 ├── .gitignore
 ├── Dockerfile
@@ -106,7 +105,6 @@ Authzen/
 ├── mvnw.cmd
 ├── pom.xml
 └── README.md
-
 ```
 
 ---
@@ -146,14 +144,15 @@ oauth:
 ```bash
 ./mvnw spring-boot:run
 ```
+
 Roles (`ROLE_USER`, `ROLE_ADMIN`) will be auto-initialized.
 
 ---
 
 ## 🌎 OAuth Flow
-- Frontend gets GitHub access token from GitHub
-- Sends it to `/auth/oauth`
-- Server verifies token with GitHub & links to user
+- Frontend gets GitHub access token from GitHub  
+- Sends it to `/auth/oauth`  
+- Server verifies token with GitHub & links to user  
 
 ---
 
@@ -185,38 +184,38 @@ Content-Type: application/json
 
 ## 📊 Database Schema
 
-- `users`: user credentials and metadata
-- `roles`: available roles
-- `user_roles`: user-role associations
-- `refresh_tokens`: long-lived refresh tokens
-- `oauth_providers`: linked GitHub accounts
-- `audit_logs`: admin actions tracking
-- `email_tokens`: password reset tokens
-- `permissions`: defines fine-grained permissions
-- `role_permissions`: role-permissions associations
+- `users`: user credentials and metadata  
+- `roles`: available roles  
+- `user_roles`: user-role associations  
+- `refresh_tokens`: long-lived refresh tokens  
+- `oauth_providers`: linked GitHub accounts  
+- `audit_logs`: admin actions tracking  
+- `email_tokens`: password reset tokens  
+- `permissions`: defines fine-grained permissions  
+- `role_permissions`: role-permissions associations  
 
 ---
 
 ## 🛡️ Security Highlights
 
-- BCrypt hashed passwords
-- JWT with separate refresh token DB
-- Role-checking via `@PreAuthorize` & `SecurityContext`
-- Admin-only endpoints protected with `ROLE_ADMIN`
-- GitHub token verification before linking
+- BCrypt hashed passwords  
+- JWT with separate refresh token DB  
+- Role-checking via `@PreAuthorize` & `SecurityContext`  
+- Admin-only endpoints protected with `ROLE_ADMIN`  
+- GitHub token verification before linking  
 
 ---
 
 ## 🔧 Contributing
 
-1. Fork the repo
-2. Fix a bug or implement a feature
-3. Submit a pull request
+1. Fork the repo  
+2. Fix a bug or implement a feature  
+3. Submit a pull request  
 
-For the open-source competition, check the [`issues`](https://github.com/CodeJam-by-CSE/University-Java/issues) tab for bugs to solve!
+For the open-source competition, check the [`issues`](https://github.com/your-org/authzen/issues) tab for bugs to solve!
 
 ---
 
 ## 📃 License
 
-[MIT](LICENSE.md) © 2025 — CodeJam Codex Team
+[MIT](LICENSE.md) © 2025 — AuthZen Team
