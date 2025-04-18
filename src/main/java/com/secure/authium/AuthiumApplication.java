@@ -1,0 +1,27 @@
+package com.secure.authium;
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+@OpenAPIDefinition(
+		info = @io.swagger.v3.oas.annotations.info.Info(
+				title = "Authzen",
+				version = "1.0.0",
+				description = "Advanced Enterprise IAM System for Secure Access Control",
+
+				contact = @io.swagger.v3.oas.annotations.info.Contact(
+						name = "Authzen",
+						email = "kavinduc.20@cse.mrt.ac.lk"
+				)
+		)
+)
+@SpringBootApplication
+public class AuthiumApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(AuthiumApplication.class, args);
+	}
+
+}

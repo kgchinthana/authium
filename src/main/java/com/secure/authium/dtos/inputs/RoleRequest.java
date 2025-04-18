@@ -1,0 +1,20 @@
+package com.secure.authium.dtos.inputs;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class RoleRequest {
+    @NotBlank
+    private String roleName;
+
+    private String description;
+
+    // getters and setters
+}
