@@ -120,16 +120,17 @@ public class AuthService {
      * @return OAuth token if successful, null otherwise.
      */
     public TokenResponse authenticateOAuth(OAuthRequest request) {
-        if (!"github".equalsIgnoreCase(request.getProvider())) {
-            return null;
+        String provider = request.getProvider();
+        if (provider == null || provider.isBlank()) {
+            return null; // or throw an exception if provider is required
         }
 
-        String accessToken = oAuthService.getGithubAccessToken(request.getOauthToken());
-        Map<String, Object> githubUser = oAuthService.getGithubUser(accessToken);
+        String accessToken = oAuthService.getAccessToken(request.getOauthToken(), provider);
+        Map<String, Object> userProfile = oAuthService.getUserProfile(accessToken, provider);
 
-        String githubId = githubUser.get("id").toString();
-        String githubLogin = (String) githubUser.get("login");
-        String githubEmail = (String) githubUser.get("email");
+        String githubId = userProfile.get("id").toString();
+        String githubLogin = (String) userProfile.get("login");
+        String githubEmail = (String) userProfile.get("email");
 
         // If GitHub email is missing, generate a dummy email
         boolean isEmailMissing = githubEmail == null || githubEmail.isBlank();
