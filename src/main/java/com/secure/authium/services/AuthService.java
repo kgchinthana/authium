@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -119,46 +120,81 @@ public class AuthService {
      * @return OAuth token if successful, null otherwise.
      */
     public TokenResponse authenticateOAuth(OAuthRequest request) {
-        if ("github".equalsIgnoreCase(request.getProvider())) {
-            String accessToken = oAuthService.getGithubAccessToken(request.getOauthToken());
-            Map<String, Object> githubUser = oAuthService.getGithubUser(accessToken);
+        String provider = request.getProvider();
+        if (provider == null || provider.isBlank()) {
+            return null; // or throw an exception if provider is required
+        }
 
-            String githubId = githubUser.get("id").toString();
-            String githubEmail = (String) githubUser.get("email");
-            String githubLogin = (String) githubUser.get("login");
+        String accessToken = oAuthService.getAccessToken(request.getOauthToken(), provider);
+        Map<String, Object> userProfile = oAuthService.getUserProfile(accessToken, provider);
 
-            // Check if provider mapping exists
-            Optional<OauthProvider> providerOpt = oauthProviderRepository.findByProviderAndExternalUserId("github", githubId);
+        String githubId = userProfile.get("id").toString();
+        String githubLogin = (String) userProfile.get("login");
+        String githubEmail = (String) userProfile.get("email");
 
-            User user;
-            if (providerOpt.isPresent()) {
-                user = providerOpt.get().getUser();
+        // If GitHub email is missing, generate a dummy email
+        boolean isEmailMissing = githubEmail == null || githubEmail.isBlank();
+        if (isEmailMissing) {
+            githubEmail = "github_" + githubId + "@gmail.com";
+        }
+
+        Optional<OauthProvider> providerOpt = oauthProviderRepository
+                .findByProviderAndExternalUserId("github", githubId);
+
+        User user;
+
+        if (providerOpt.isPresent()) {
+            user = providerOpt.get().getUser();
+        } else {
+            // Check if user with same email exists
+            Optional<User> existingUser = userRepository.findByEmail(githubEmail);
+
+            // Get default user role
+            Role userRole = roleRepository.findByName("ROLE_USER")
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Default role not found: ROLE_USER"));
+
+            if (existingUser.isPresent()) {
+                user = existingUser.get();
             } else {
-                // Check by email (if exists)
-                user = userRepository.findByEmail(githubEmail)
-                        .orElseGet(() -> userRepository.save(User.builder()
-                                .username(githubLogin)
-                                .email(githubEmail)
-                                .password("") // no password
-                                .isActive(true)
-                                .isLocked(false)
-                                .build()));
+                // Create new user
+                user = User.builder()
+                        .username(githubLogin)
+                        .email(githubEmail)
+                        .password("") // No password for OAuth users
+                        .isActive(true)
+                        .isLocked(false)
+                        .createdAt(Timestamp.valueOf(LocalDateTime.now()))
+                        .build();
 
-                oauthProviderRepository.save(OauthProvider.builder()
-                        .provider("github")
-                        .externalUserId(githubId)
-                        .user(user)
-                        .build());
+                // Assign role
+                UserRole userRoleMapping = new UserRole();
+                userRoleMapping.setUser(user);
+                userRoleMapping.setRole(userRole);
+                user.getUserRoles().add(userRoleMapping);
+
+                user = userRepository.save(user);
             }
 
-            UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
-            return new TokenResponse(
-                    jwtService.generateAccessToken(userResponse),
-                    jwtService.generateRefreshToken(userResponse)
-            );
+            // Save OAuth mapping
+            oauthProviderRepository.save(OauthProvider.builder()
+                    .provider("github")
+                    .externalUserId(githubId)
+                    .user(user)
+                    .build());
         }
-        return null;
+
+        UserResponse userResponse = userService.loadUserByUsername(user.getEmail());
+
+        return new TokenResponse(
+                jwtService.generateAccessToken(userResponse),
+                jwtService.generateRefreshToken(userResponse)
+        );
     }
+
+
+
 
     /**
      * Sends a password reset email to the user.

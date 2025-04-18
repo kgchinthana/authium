@@ -45,10 +45,21 @@ server:
 email:
   from: ${EMAIL_FROM}
 
-github:
-  client-id: ${GITHUB_CLIENT_ID}
-  client-secret: ${GITHUB_CLIENT_SECRET}
-  redirect-uri: ${GITHUB_REDIRECT_URI}
+oauth:
+  github:
+    client-id: ${GITHUB_CLIENT_ID}
+    client-secret: ${GITHUB_CLIENT_SECRET}
+    redirect-uri: ${GITHUB_REDIRECT_URI}
+
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
+
+  facebook:
+    client-id: ${FACEBOOK_CLIENT_ID}
+    client-secret: ${FACEBOOK_CLIENT_SECRET}
+    redirect-uri: ${FACEBOOK_REDIRECT_URI}
 
 admin:
   email: ${ADMIN_EMAIL}
