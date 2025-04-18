@@ -1,13 +1,17 @@
 package com.secure.authium.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class OAuthService {
 
@@ -27,18 +31,28 @@ public class OAuthService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, String> body = Map.of(
-                "client_id", clientId,
-                "client_secret", clientSecret,
-                "code", code,
-                "redirect_uri", redirectUri
-        );
+        Map<String, String> body = new HashMap<>();
+        body.put("client_id", clientId);
+        body.put("client_secret", clientSecret);
+        body.put("code", code);
+        body.put("redirect_uri", redirectUri);
 
         HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
-        return response.getBody().get("access_token").toString();
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody().get("access_token").toString();
+            } else {
+                log.error("Failed to fetch GitHub access token: {}", response);
+                throw new RuntimeException("Failed to get GitHub access token");
+            }
+        } catch (RestClientException e) {
+            log.error("Error while fetching GitHub access token", e);
+            throw new RuntimeException("GitHub access token fetch failed", e);
+        }
     }
 
     public Map<String, Object> getGithubUser(String accessToken) {
@@ -46,10 +60,21 @@ public class OAuthService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, request, Map.class);
-        return response.getBody();
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, request, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return response.getBody();
+            } else {
+                log.error("Failed to fetch GitHub user profile: {}", response);
+                throw new RuntimeException("Failed to get GitHub user");
+            }
+        } catch (RestClientException e) {
+            log.error("Error while fetching GitHub user", e);
+            throw new RuntimeException("GitHub user fetch failed", e);
+        }
     }
 }
