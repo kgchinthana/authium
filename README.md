@@ -1,7 +1,7 @@
 # Authium🔐
 
 <p align="center">
-  <img src="[logo.png](https://github.com/kgchinthana/authium/blob/bab0231a4f8bc729399dd6730d7b608ef11c35dc/logo.png)" alt="Authium Banner" width="100%" />
+  <img src="https://github.com/kgchinthana/authium/blob/bab0231a4f8bc729399dd6730d7b608ef11c35dc/logo.png?raw=true" alt="Authium Banner" width="100%" />
 </p>
 
 
