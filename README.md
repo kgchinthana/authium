@@ -1,5 +1,10 @@
 # Authium🔐
 
+<p align="center">
+  <img src="[logo.png](https://github.com/kgchinthana/authium/blob/bab0231a4f8bc729399dd6730d7b608ef11c35dc/logo.png)" alt="Authium Banner" width="100%" />
+</p>
+
+
 A robust and extensible authentication and authorization backend built with Spring Boot. Perfect for real-world applications, AuthZen supports **JWT**, **OAuth2**, **role-based access**, **admin delegation**, and **full token lifecycle control**.
 
 ---
