@@ -14,7 +14,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 				contact = @io.swagger.v3.oas.annotations.info.Contact(
 						name = "Authzen",
-						email = "kavinduc.20@cse.mrt.ac.lk"
+						email = "kavindugchinthana@gmail.com"
 				)
 		)
 )
