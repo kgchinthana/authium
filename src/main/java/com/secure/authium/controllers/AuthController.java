@@ -39,10 +39,21 @@ public class AuthController {
             AuthzenResponse<UserResponse> response = new AuthzenResponse<>(userResponse);
             response.setMessage("User registered successfully");
             return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            AuthzenResponse<UserResponse> response = new AuthzenResponse<>(null);
+            response.setMessage("Email already registered");
+            return ResponseEntity.badRequest().body(response);
+        } catch (RuntimeException e) {
+            AuthzenResponse<UserResponse> response = new AuthzenResponse<>(null);
+            response.setMessage("An error occurred during registration");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
-            throw new RuntimeException("An error occurred during registration");
+            AuthzenResponse<UserResponse> response = new AuthzenResponse<>(null);
+            response.setMessage("Unexpected error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
 
     /**
      * Authenticates a user and issues a token.
