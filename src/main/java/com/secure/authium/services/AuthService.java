@@ -59,16 +59,12 @@ public class AuthService {
      * @return true if registration was successful, false otherwise.
      */
     public UserResponse registerUser(RegisterRequest request) {
-        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser.isPresent()) {
-            return new UserResponse();
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email already registered.");
         }
 
-        List<Role> roles = roleRepository.findByName("ROLE_USER");
-        if (roles.isEmpty()) {
-            throw new RuntimeException("Default role not found: ROLE_USER");
-        }
-        Role userRole = roles.get(0);
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Default role not found: ROLE_USER"));
 
         User user = new User();
         user.setUsername(request.getUsername());
@@ -84,10 +80,12 @@ public class AuthService {
         user.getUserRoles().add(userRoleMapping);
 
         userRepository.save(user);
+
         List<String> permissionNames = userRepository.findPermissionNamesByUsername(user.getUsername());
 
         return UserResponse.fromEntity(user, permissionNames);
     }
+
 
 
     /**

@@ -45,23 +45,23 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Role> roles = roleRepository.findByName(request.getRoleName());
+        Role role = roleRepository.findByName(request.getRoleName())
+                .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRoleName()));
 
-        // Clear existing roles
         user.getUserRoles().clear();
 
-        // Assign new roles
-        for (Role role : roles) {
-            UserRole userRole = new UserRole();
-            userRole.setUser(user);
-            userRole.setRole(role);
-            user.getUserRoles().add(userRole);
-        }
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        user.getUserRoles().add(userRole);
 
         userRepository.save(user);
+
         logAction(adminUsername, "User roles updated successfully");
+
         return UpdateUserResponse.fromEntity(user);
     }
+
 
 
     public List<AuditLogResponse> getAuditLogs(String adminUsername) {
@@ -101,16 +101,12 @@ public class AdminService {
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Role> roles = roleRepository.findByName(request.getRole());
-        if (roles.isEmpty()) {
-            throw new RuntimeException("Role not found");
-        }
-        Role role = roles.get(0); // or apply some selection logic
+        Role role = roleRepository.findByName(request.getRole())
+                .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
 
-
-        // Check if the user already has the role to prevent duplicates
         boolean alreadyAssigned = user.getUserRoles().stream()
                 .anyMatch(userRole -> userRole.getRole().getName().equals(role.getName()));
+
         if (alreadyAssigned) {
             return "User already has this role";
         }
@@ -121,10 +117,12 @@ public class AdminService {
 
         user.getUserRoles().add(userRole);
         userRepository.save(user);
-        logAction(adminUsername, "Permissions delegated successfully");
+
+        logAction(adminUsername, "Permissions delegated: " + role.getName());
 
         return "Permissions delegated successfully";
     }
+
 
 
     private void logAction(String adminUsername, String actionType) {

@@ -45,18 +45,16 @@ public class RoleInitializer {
     }
 
     private Role createRoleIfNotExists(String name, String description) {
-        List<Role> roles = roleRepository.findByName(name);
-
-        if (roles.isEmpty()) {
-            Role newRole = Role.builder()
-                    .name(name)
-                    .description(description)
-                    .build();
-            return roleRepository.save(newRole);
-        }
-
-        return roles.get(0);
+        return roleRepository.findByName(name)
+                .orElseGet(() -> {
+                    Role newRole = Role.builder()
+                            .name(name)
+                            .description(description)
+                            .build();
+                    return roleRepository.save(newRole);
+                });
     }
+
 
     private void createAdminUserIfNotExists(Role adminRole) {
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
