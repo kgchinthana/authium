@@ -28,7 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<nimbus-jose-jwt.version>9.31</nimbus-jose-jwt.version>
+		<nimbus-jose-jwt.version>9.37.2</nimbus-jose-jwt.version>
 		<oauth2-oidc-sdk.version>11.6</oauth2-oidc-sdk.version>
 
 	</properties>
