@@ -33,6 +33,7 @@ public class UserService {
                 .collect(Collectors.toSet());
 
         return UserResponse.builder()
+                .id(user.getId())
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .roles(roles) // ensure UserResponse has a "roles" field of type Set<String> or List<String>
