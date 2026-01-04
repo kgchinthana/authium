@@ -40,7 +40,6 @@ public class UserService {
                 .build();
     }
 
-
     public UserResponse getProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
