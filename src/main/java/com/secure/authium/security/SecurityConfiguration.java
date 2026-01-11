@@ -41,12 +41,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@SecurityScheme(
-        name = "Bearer Authentication",
-        type = SecuritySchemeType.HTTP,
-        bearerFormat = "JWT",
-        scheme = "bearer"
-)
+@SecurityScheme(name = "Bearer Authentication", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 public class SecurityConfiguration {
 
     @Value("${jwt.secret}")
@@ -81,7 +76,6 @@ public class SecurityConfiguration {
         return converter;
     }
 
-
     /**
      * Main Security Filter Chain configuration.
      * - Enables stateless session
@@ -110,40 +104,43 @@ public class SecurityConfiguration {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/api-docs/**",
                                 "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
+                                "/webjars/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                                .decoder(jwtDecoder())
-                        )
-                )
+                                .decoder(jwtDecoder())))
                 .headers(headers -> {
                     headers
                             .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
                             .defaultsDisabled()
                             .addHeaderWriter(new StaticHeadersWriter("X-Content-Type-Options", "nosniff"))
                             .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
-                            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
+                            .referrerPolicy(
+                                    referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
                 });
 
         return http.build();
     }
 
     /**
-     * Configures a basic CORS filter allowing all origins, headers, and common methods.
+     * Configures a basic CORS filter allowing all origins, headers, and common
+     * methods.
      * NOTE: Adjust allowed origins for production environments.
      */
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*")); // Consider restricting in production
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "http://127.0.0.1:*")); // Allow any
+                                                                                                    // localhost port
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("*"));
+        config.setAllowCredentials(true);
+        config.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
