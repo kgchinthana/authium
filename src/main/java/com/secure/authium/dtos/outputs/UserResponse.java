@@ -19,6 +19,7 @@ public class UserResponse {
     private String email;
     private Set<String> roles;
     private List<String> permissions;
+    private boolean isActive;
 
     public static UserResponse fromEntity(User user, List<String> permissionNames) {
         Set<String> roleNames = user.getUserRoles().stream()
@@ -33,6 +34,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .roles(roleNames)
                 .permissions(permissionNames)
+                .isActive(user.isActive())
                 .build();
     }
 
